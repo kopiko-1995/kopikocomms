@@ -736,7 +736,8 @@
                             isTyping: false, // Default to not typing
                             lastReadMessageTimestamp: serverTimestamp(), // Update on connect
                             hasUnreadPrivateMessages: existingData.hasUnreadPrivateMessages || false, // Preserve existing
-                            unreadFrom: existingData.unreadFrom || {} // Preserve existing
+                            unreadFrom: existingData.unreadFrom || {}, // Preserve existing
+                            currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Set current private chat status
                         });
                     }).catch(e => console.error("Error fetching presence data on connect:", e));
 
@@ -855,7 +856,8 @@
                     displayName: currentDisplayName, // Ensure display name is current
                     status: 'online', // Ensure status is online
                     isTyping: isTyping,
-                    timestamp: serverTimestamp() // Update timestamp to keep presence active
+                    timestamp: serverTimestamp(), // Update timestamp to keep presence active
+                    currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Maintain current private chat status
                 });
             }).catch(error => console.error("Error setting typing status:", error));
         }
@@ -882,7 +884,8 @@
                             set(currentUserPresenceRef, {
                                 ...currentData, // Preserve existing data
                                 lastReadMessageTimestamp: lastMessageTimestamp,
-                                timestamp: serverTimestamp() // Update timestamp to keep presence active
+                                timestamp: serverTimestamp(), // Update timestamp to keep presence active
+                                currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Maintain current private chat status
                             });
                         }).catch(error => console.error("Error updating last read timestamp:", error));
                     }
@@ -963,11 +966,11 @@
             leavePrivateChatButton.classList.remove('hidden');
             hideOnlineUsersModal(); // Close the online users modal
 
-            // Clear existing messages and load private messages (placeholder for now)
-            messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Establishing Private Channel...</div>
-                                    <div id="typing-indicator" class="typing-indicator hidden">
-                                    <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
-                                    </div>`;
+            // Update current user's presence to show they are in a private chat with targetUser
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+            update(currentUserPresenceRef, { currentActivePrivateChatWith: targetUserId })
+                .then(() => console.log(`[startPrivateChat] Current user presence updated: in private chat with ${targetUserId}.`))
+                .catch(e => console.error("[startPrivateChat] Error updating currentActivePrivateChatWith:", e));
 
             // Mark unread private messages from this sender as read for the current user
             const currentUserUnreadFromSpecificRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}/unreadFrom/${targetUserId}`);
@@ -985,6 +988,12 @@
                 }).catch(e => console.error("[startPrivateChat] Error checking unreadFrom for global badge:", e));
             }).catch(e => console.error("[startPrivateChat] Error removing unreadFrom flag:", e));
 
+
+            // Clear existing messages and load private messages (placeholder for now)
+            messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Establishing Private Channel...</div>
+                                    <div id="typing-indicator" class="typing-indicator hidden">
+                                    <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
+                                    </div>`;
 
             // Stop listening to public messages and start listening to private messages
             listenForMessages(); // Re-call to switch listener
@@ -1004,6 +1013,12 @@
             currentChatTitle.textContent = 'Public Channel';
             leavePrivateChatButton.classList.add('hidden');
 
+            // Update current user's presence to show they are no longer in a private chat
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+            update(currentUserPresenceRef, { currentActivePrivateChatWith: null })
+                .then(() => console.log(`[leavePrivateChat] Current user presence updated: back to public channel.`))
+                .catch(e => console.error("[leavePrivateChat] Error updating currentActivePrivateChatWith to null:", e));
+
             // Show loading indicator immediately
             messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Re-establishing Public Channel...</div>
                                     <div id="typing-indicator" class="typing-indicator hidden">
@@ -1022,7 +1037,7 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '�', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '�', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
@@ -1126,14 +1141,24 @@
                             messagePayload.type = 'audio';
                             await push(messagesRef, messagePayload);
 
-                            // NEW: Mark recipient with unread PMs if private chat
+                            // NEW: Mark recipient with unread PMs if private chat, ONLY IF RECIPIENT IS NOT CURRENTLY IN CHAT WITH SENDER
                             if (currentPrivateChatUserId) {
-                                console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
                                 const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
-                                update(recipientPresenceRef, {
-                                    hasUnreadPrivateMessages: true,
-                                    [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
-                                }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                                get(recipientPresenceRef).then(recipientSnapshot => {
+                                    const recipientData = recipientSnapshot.val();
+                                    const isRecipientCurrentlyChattingWithMe = recipientData && recipientData.currentActivePrivateChatWith === currentUserId;
+                                    console.log(`[sendMessage] Recipient (${currentPrivateChatUserId}) currentActivePrivateChatWith: ${recipientData?.currentActivePrivateChatWith}. Is recipient chatting with me? ${isRecipientCurrentlyChattingWithMe}`);
+
+                                    if (!isRecipientCurrentlyChattingWithMe) {
+                                        console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
+                                        update(recipientPresenceRef, {
+                                            hasUnreadPrivateMessages: true,
+                                            [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                                        }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                                    } else {
+                                        console.log(`[sendMessage] Recipient ${currentPrivateChatDisplayName} is already in chat with sender, not setting unread PM flag.`);
+                                    }
+                                }).catch(e => console.error("Error fetching recipient presence for unread check:", e));
                             }
 
                             // Reset voice recording UI after sending
@@ -1156,14 +1181,24 @@
                     // Push message for text and image
                     await push(messagesRef, messagePayload);
 
-                    // NEW: Mark recipient with unread PMs if private chat (for text and image messages)
+                    // NEW: Mark recipient with unread PMs if private chat (for text and image messages), ONLY IF RECIPIENT IS NOT CURRENTLY IN CHAT WITH SENDER
                     if (currentPrivateChatUserId) {
-                        console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
                         const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
-                        update(recipientPresenceRef, {
-                            hasUnreadPrivateMessages: true,
-                            [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
-                        }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                        get(recipientPresenceRef).then(recipientSnapshot => {
+                            const recipientData = recipientSnapshot.val();
+                            const isRecipientCurrentlyChattingWithMe = recipientData && recipientData.currentActivePrivateChatWith === currentUserId;
+                            console.log(`[sendMessage] Recipient (${currentPrivateChatUserId}) currentActivePrivateChatWith: ${recipientData?.currentActivePrivateChatWith}. Is recipient chatting with me? ${isRecipientCurrentlyChattingWithMe}`);
+
+                            if (!isRecipientCurrentlyChattingWithMe) {
+                                console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
+                                update(recipientPresenceRef, {
+                                    hasUnreadPrivateMessages: true,
+                                    [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                                }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                            } else {
+                                console.log(`[sendMessage] Recipient ${currentPrivateChatDisplayName} is already in chat with sender, not setting unread PM flag.`);
+                            }
+                        }).catch(e => console.error("Error fetching recipient presence for unread check:", e));
                     }
 
                 } catch (error) {
