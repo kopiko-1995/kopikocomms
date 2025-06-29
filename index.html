@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Chat Interface</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for message area - military green/grey */
+        .message-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .message-area::-webkit-scrollbar-track {
+            background: #2d3748; /* Darker track */
+            border-radius: 10px;
+        }
+
+        .message-area::-webkit-scrollbar-thumb {
+            background: #4a5568; /* Muted grey thumb */
+            border-radius: 10px;
+        }
+
+        .message-area::-webkit-scrollbar-thumb:hover {
+            background: #6a7486; /* Slightly lighter on hover */
+        }
+
+        /* Styling for emoji picker */
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); /* Slightly larger emoji buttons */
+            gap: 4px;
+            padding: 12px;
+            background-color: #1a202c; /* Dark background */
+            border-radius: 8px; /* Slightly less rounded for a tactical feel */
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.2); /* Green glow effect */
+            max-height: 250px;
+            overflow-y: auto;
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            z-index: 50;
+            border: 1px solid #10b981; /* Accent green border */
+        }
+
+        .emoji-picker button {
+            font-size: 28px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px; /* Sharper corners */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .emoji-picker button:hover {
+            background-color: rgba(0, 255, 0, 0.1); /* Subtle green tint on hover */
+            transform: scale(1.05);
+        }
+
+        .emoji-picker button:active {
+            background-color: rgba(0, 255, 0, 0.2);
+            transform: scale(0.98);
+        }
+
+        /* Custom alert message styling */
+        .app-alert {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Roboto Mono', monospace; /* Technical font for alerts */
+        }
+
+        /* Recording specific styles */
+        .record-button-active {
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Online status indicators */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 6px;
+            vertical-align: middle;
+            background-color: #ccc; /* Default grey for unknown/offline */
+        }
+        .status-dot.online {
+            background-color: #10b981; /* Green */
+        }
+        .status-dot.offline {
+            background-color: #ef4444; /* Red */
+        }
+        .status-text {
+            font-size: 0.75rem; /* text-xs */
+            margin-left: 4px;
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+        .status-text.online {
+            color: #10b981; /* Green */
+        }
+        .status-text.offline {
+            color: #ef4444; /* Red */
+        }
+    </style>
+    <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oxanium:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-950 min-h-screen flex items-center justify-center p-0 font-['Roboto_Mono'] text-green-300 selection:bg-green-500 selection:text-white">
+    <!-- Main Chat Container: Industrial, dark panel look -->
+    <div class="bg-gray-900 rounded-lg shadow-xl overflow-hidden w-full h-screen sm:h-[95vh] sm:max-h-[900px] sm:w-[90vw] sm:max-w-5xl flex flex-col border border-gray-700 transition-all duration-300 ease-in-out">
+        <!-- Chat Header -->
+        <div class="bg-gray-800 p-4 flex flex-col md:flex-row justify-between items-center gap-y-3 md:gap-x-4 shadow-inner border-b border-green-500 flex-shrink-0">
+            <h1 class="text-xl md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
+            <!-- User Info and Name Setting Controls -->
+            <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-2 md:gap-x-3 w-full md:w-auto">
+                <div id="user-info" class="text-sm md:text-base font-medium text-gray-400 flex items-center">
+                    <span class="font-bold text-green-400">Unit:</span> <span id="display-user-id" class="font-extrabold text-green-300 ml-1">UNKNOWN</span> <span id="my-status-indicator" class="status-dot ml-2"></span>
+                </div>
+                <div class="flex items-center gap-2 w-full max-w-xs md:max-w-none md:w-auto">
+                    <input
+                        type="text"
+                        id="display-name-input"
+                        placeholder="Callsign"
+                        class="p-2 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-base flex-grow transition duration-200"
+                        maxlength="15"
+                    />
+                    <button
+                        id="set-display-name-button"
+                        class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-sm md:text-base font-semibold py-2 px-4 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700"
+                    >
+                        Set Callsign
+                    </button>
+                </div>
+                <button
+                    id="enable-notifications-button"
+                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm md:text-base font-semibold py-2 px-4 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full md:w-auto mt-2 md:mt-0 border border-blue-700"
+                >
+                    Enable Alerts
+                </button>
+            </div>
+        </div>
+
+        <!-- Message Area -->
+        <div id="message-area" class="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 message-area bg-gray-900 border-t border-b border-gray-800">
+            <!-- Messages will be injected here by JavaScript -->
+            <div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Awaiting Transmission...</div>
+        </div>
+
+        <!-- Message Input and Emoji/Voice Controls -->
+        <div class="bg-gray-800 p-4 border-t border-gray-700 flex flex-col relative flex-shrink-0">
+            <!-- Emoji Picker -->
+            <div id="emoji-picker" class="emoji-picker hidden">
+                <!-- Emojis will be dynamically added here -->
+            </div>
+
+            <!-- Main Input Row -->
+            <div class="flex items-end gap-3">
+                <!-- Voice Recording Buttons -->
+                <button
+                    id="record-voice-button"
+                    class="text-3xl md:text-4xl p-2.5 rounded-full bg-red-700 hover:bg-red-600 active:bg-red-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 border border-red-800 flex-shrink-0"
+                    title="Record Audio Log"
+                >
+                    🎤
+                </button>
+                <button
+                    id="stop-record-button"
+                    class="text-sm md:text-base p-2 rounded-sm bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold hidden transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 border border-red-700 flex-shrink-0"
+                    title="Terminate Recording"
+                >
+                    🛑 Stop
+                </button>
+                <button
+                    id="send-voice-button"
+                    class="bg-lime-600 hover:bg-lime-500 active:bg-lime-700 text-white font-bold py-2 px-4 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 border border-lime-700 flex-shrink-0"
+                    title="Transmit Audio Log"
+                >
+                    ▶️ Send
+                </button>
+                <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Recording Audio...</span>
+
+                <!-- Emoji and Text Input -->
+                <button
+                    id="emoji-button"
+                    class="text-3xl md:text-4xl p-2.5 rounded-full bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-yellow-300 transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-600 flex-shrink-0"
+                    title="Insert Protocol Icon"
+                >
+                    😊
+                </button>
+                <input
+                    type="text"
+                    id="message-input"
+                    placeholder="Enter message protocol..."
+                    class="flex-grow p-3 md:p-4 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-base md:text-lg transition duration-200"
+                />
+                <button
+                    id="send-button"
+                    class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-3 md:py-4 px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 flex-shrink-0"
+                >
+                    Transmit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for chat notification sound -->
+    <audio id="chat-sound" preload="auto">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoIFNvbHV0aW9uc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script type="module">
+        // Import Firebase functions from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js"; // Added set, onDisconnect, serverTimestamp for presence
+
+        // Your web app's Firebase configuration (provided by the user)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkcuhiyTtLLxRe537sO8fsiuzJebKC8GQ",
+            authDomain: "testfireapp-bbd18.firebaseapp.com",
+            databaseURL: "https://testfireapp-bbd18-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "testfireapp-bbd18",
+            storageBucket: "testfireapp-bbd18.firebasestorage.app",
+            messagingSenderId: "1072068316472",
+            appId: "1:1072068316472:web:52db3186f76a3511eb05cd"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Access global variables for app ID
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // DOM elements
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const messageArea = document.getElementById('message-area');
+        const displayUserId = document.getElementById('display-user-id');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const displayNameInput = document.getElementById('display-name-input');
+        const setDisplayNameButton = document.getElementById('set-display-name-button');
+        const chatSound = document.getElementById('chat-sound');
+        const enableNotificationsButton = document.getElementById('enable-notifications-button');
+        const myStatusIndicator = document.getElementById('my-status-indicator'); // New: My own status indicator
+
+        // Voice message elements
+        const recordVoiceButton = document.getElementById('record-voice-button');
+        const stopRecordButton = document.getElementById('stop-record-button');
+        const sendVoiceButton = document.getElementById('send-voice-button');
+        const recordingStatus = document.getElementById('recording-status');
+
+        // Voice message variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+        let audioMimeType = '';
+
+        // Assign a random user ID without Firebase authentication
+        const currentUserId = crypto.randomUUID();
+        let currentDisplayName = `Unit-${currentUserId.substring(0, 4).toUpperCase()}`; // Default military-style display name
+
+        // Global map to store online status of all users
+        const userPresenceMap = {};
+        // Timestamp of the last message processed for sound/notification
+        let lastProcessedMessageTimestamp = 0;
+
+        /**
+         * Loads the display name from local storage or sets a default.
+         * Updates the display name input and the header display.
+         */
+        function initializeDisplayName() {
+            const storedName = localStorage.getItem('chatDisplayName');
+            if (storedName) {
+                currentDisplayName = storedName;
+            }
+            displayNameInput.value = currentDisplayName;
+            displayUserId.textContent = currentDisplayName;
+            console.log("Current User ID (locally generated):", currentUserId);
+            console.log("Current Callsign:", currentDisplayName);
+        }
+
+        /**
+         * Sets the user's display name and saves it to local storage.
+         */
+        function setDisplayName() {
+            const newName = displayNameInput.value.trim();
+            if (newName) {
+                currentDisplayName = newName;
+                localStorage.setItem('chatDisplayName', newName);
+                displayUserId.textContent = newName;
+                alertMessage(`Callsign set to "${newName}"`, 'green');
+                // Also update presence info with new display name
+                updateMyPresence(currentDisplayName, 'online');
+            } else {
+                alertMessage("Callsign cannot be empty.", 'red');
+            }
+        }
+
+        /**
+         * Sets up the Firebase Realtime Database presence system for the current user.
+         */
+        function setupPresence() {
+            const connectedRef = ref(db, '.info/connected');
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+
+            onValue(connectedRef, (snapshot) => {
+                if (snapshot.val() === true) {
+                    // We are connected. Set our status to online.
+                    set(currentUserPresenceRef, {
+                        displayName: currentDisplayName,
+                        status: 'online',
+                        timestamp: serverTimestamp()
+                    });
+                    // Set up onDisconnect to mark us offline when connection is lost/app closed
+                    onDisconnect(currentUserPresenceRef).set({
+                        displayName: currentDisplayName,
+                        status: 'offline',
+                        timestamp: serverTimestamp()
+                    });
+                    myStatusIndicator.classList.remove('offline');
+                    myStatusIndicator.classList.add('online');
+                } else {
+                    // We are disconnected from Firebase. Update UI, onDisconnect will handle DB.
+                    myStatusIndicator.classList.remove('online');
+                    myStatusIndicator.classList.add('offline');
+                }
+            });
+
+            // Listen for all users' presence changes to update the global map and UI
+            onValue(ref(db, `artifacts/${appId}/public/data/users_presence`), (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    userPresenceMap[childSnapshot.key] = childSnapshot.val();
+                });
+                updateAllMessageStatusesInUI(); // Update status for all displayed messages
+            });
+        }
+
+        /**
+         * Updates the status indicator for all messages in the UI based on userPresenceMap.
+         */
+        function updateAllMessageStatusesInUI() {
+            document.querySelectorAll('.status-indicator').forEach(indicator => {
+                const userId = indicator.dataset.userId;
+                const userStatus = userPresenceMap[userId] ? userPresenceMap[userId].status : 'unknown';
+
+                indicator.textContent = userStatus === 'online' ? '[ONLINE]' : '[OFFLINE]';
+                indicator.classList.remove('online', 'offline');
+                if (userStatus === 'online') {
+                    indicator.classList.add('online');
+                    indicator.style.color = '#10b981'; /* Tailwind green-500 */
+                } else {
+                    indicator.classList.add('offline');
+                    indicator.style.color = '#ef4444'; /* Tailwind red-500 */
+                }
+            });
+        }
+
+        /**
+         * Helper to explicitly update my presence (e.g., after changing display name)
+         */
+        function updateMyPresence(displayName, status) {
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+            set(currentUserPresenceRef, {
+                displayName: displayName,
+                status: status,
+                timestamp: serverTimestamp()
+            });
+        }
+
+
+        /**
+         * Requests permission for browser notifications.
+         */
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alertMessage("Browser does not support alert protocols.", 'red');
+            } else if (Notification.permission === "granted") {
+                alertMessage("Alert permission already granted. Status: ACTIVE.", 'blue');
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        alertMessage("Alert permission granted! Status: ACTIVE.", 'green');
+                    } else {
+                        alertMessage("Alert permission denied. Status: INACTIVE.", 'red');
+                    }
+                });
+            } else {
+                alertMessage("Alert permission previously denied. Adjust browser settings to enable.", 'red');
+            }
+        }
+
+        /**
+         * Displays a browser notification for a new message.
+         * @param {object} messageData - The message object.
+         */
+        function showNotification(messageData) {
+            if (Notification.permission === "granted") {
+                const title = `Incoming Transmission from ${messageData.displayName || `Unit-${messageData.userId.substring(0, 4).toUpperCase()}...`}`;
+                const options = {
+                    body: messageData.text || "Voice log incoming.", // Indicate voice message
+                    icon: 'https://placehold.co/48x48/00FF00/000000?text=COM', // Green COM icon
+                    tag: 'chat-message-notification', // To group notifications
+                    renotify: true // Re-show if already displayed
+                };
+                const notification = new Notification(title, options);
+
+                // Optional: Focus the tab when notification is clicked
+                notification.onclick = function() {
+                    window.focus();
+                    this.close();
+                };
+            }
+        }
+
+
+        // Call to initialize display name and setup presence on load
+        initializeDisplayName();
+        setupPresence();
+        listenForMessages(); // Start listening for messages immediately
+
+        // Array of common emojis (renamed to 'protocol_icons' for military theme)
+        const protocol_icons = [
+            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
+            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
+            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '�',
+            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
+        ];
+
+        /**
+         * Populates the emoji picker with buttons for each emoji.
+         */
+        function populateEmojiPicker() {
+            protocol_icons.forEach(emoji => {
+                const button = document.createElement('button');
+                button.textContent = emoji;
+                button.title = emoji; // Add title for accessibility
+                button.addEventListener('click', () => {
+                    messageInput.value += emoji; // Append emoji to input
+                    emojiPicker.classList.add('hidden'); // Hide picker after selection
+                    messageInput.focus(); // Keep focus on input
+                });
+                emojiPicker.appendChild(button);
+            });
+        }
+
+        // Call to populate emoji picker on load
+        populateEmojiPicker();
+
+        /**
+         * Sends a message to the Firebase Realtime Database.
+         */
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+
+            if (messageText && currentUserId) {
+                try {
+                    // Path for public chat data
+                    const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+                    await push(messagesRef, {
+                        userId: currentUserId,
+                        displayName: currentDisplayName,
+                        text: messageText,
+                        timestamp: serverTimestamp()
+                    });
+                    messageInput.value = ''; // Clear input field
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                    alertMessage("Transmission failed. Retrying...", 'red');
+                }
+            }
+        }
+
+        /**
+         * Starts recording audio.
+         */
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Check for MediaRecorder support. Use 'audio/webm' as preferred.
+                const options = { mimeType: 'audio/webm' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'audio/ogg'; // Fallback for some browsers
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options.mimeType = 'audio/wav'; // Another fallback
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            alertMessage("Audio recording not supported in this browser.", 'red');
+                            return;
+                        }
+                    }
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioMimeType = options.mimeType; // Store the actual mime type being used
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: audioMimeType });
+                    // Show send button and hide stop button
+                    stopRecordButton.classList.add('hidden');
+                    sendVoiceButton.classList.remove('hidden');
+                    recordVoiceButton.classList.remove('record-button-active'); // Remove pulsing animation
+                    recordingStatus.classList.add('hidden');
+                };
+
+                mediaRecorder.start();
+                recordVoiceButton.classList.add('record-button-active'); // Add pulsing animation
+                stopRecordButton.classList.remove('hidden');
+                recordVoiceButton.classList.add('hidden'); // Hide record button while recording
+                recordingStatus.classList.remove('hidden');
+                sendVoiceButton.classList.add('hidden'); // Hide send button while recording
+                messageInput.classList.add('hidden'); // Hide text input
+                sendButton.classList.add('hidden'); // Hide text send button
+                emojiButton.classList.add('hidden'); // Hide emoji button
+                alertMessage("Audio log initiated...", 'blue');
+
+            } /* catches (err) */ catch (err) {
+                console.error("Error accessing microphone:", err);
+                alertMessage("Failed to access microphone. Permission required for audio log.", 'red');
+                // Reset UI in case of error
+                stopRecordButton.classList.add('hidden');
+                recordVoiceButton.classList.remove('hidden');
+                recordVoiceButton.classList.remove('record-button-active');
+                recordingStatus.classList.add('hidden');
+                sendVoiceButton.classList.add('hidden');
+                messageInput.classList.remove('hidden');
+                sendButton.classList.remove('hidden');
+                emojiButton.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Stops recording audio.
+         */
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+                alertMessage("Audio log terminated. Ready for transmit.", 'blue');
+            }
+        }
+
+        /**
+         * Sends a voice message to the Firebase Realtime Database.
+         */
+        async function sendVoiceMessage() {
+            if (audioBlob && currentUserId) {
+                // Convert Blob to Base64 string
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const base64data = reader.result; // This will be data:audio/webm;base64,...
+
+                    try {
+                        const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+                        await push(messagesRef, {
+                            userId: currentUserId,
+                            displayName: currentDisplayName,
+                            audioData: base64data, // Store base64 audio
+                            audioMimeType: audioMimeType, // Store mime type
+                            timestamp: serverTimestamp()
+                        });
+                        alertMessage("Voice log transmitted. Status: COMPLETE.", 'green');
+                        // Reset voice recording UI
+                        audioBlob = null;
+                        audioChunks = [];
+                        audioMimeType = '';
+                        sendVoiceButton.classList.add('hidden');
+                        recordVoiceButton.classList.remove('hidden'); // Show record button again
+                        messageInput.classList.remove('hidden'); // Show text input
+                        sendButton.classList.remove('hidden'); // Show text send button
+                        emojiButton.classList.remove('hidden'); // Show emoji button
+
+                    } catch (error) {
+                        console.error("Error transmitting audio log:", error);
+                        alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
+                    }
+                };
+                reader.readAsDataURL(audioBlob);
+            } else {
+                alertMessage("No audio log detected for transmission.", 'red');
+            }
+        }
+
+
+        /**
+         * Listens for new messages from the Firebase Realtime Database in real-time.
+         */
+        function listenForMessages() {
+            // Path for public chat data
+            const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+
+            onValue(messagesRef, (snapshot) => {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator once data starts coming
+                messageArea.innerHTML = ''; // Clear previous messages
+
+                // Track the timestamp of the latest message in this snapshot to prevent re-triggering sound/notification
+                let currentLastMessageTimestamp = 0;
+
+                if (snapshot.exists()) {
+                    const messagesData = snapshot.val();
+                    const messagesArray = [];
+
+                    // Convert object of messages into an array and sort by timestamp
+                    for (const key in messagesData) {
+                        messagesArray.push({ id: key, ...messagesData[key] });
+                    }
+                    // Sort by timestamp if available, otherwise by key (which Firebase uses for push IDs, often chronological)
+                    messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                    messagesArray.forEach(msg => {
+                        const messageElement = document.createElement('div');
+                        let alignmentClass = '';
+                        let bubbleColorClass = '';
+                        let textColorClass = 'text-gray-200'; // Default text color for messages
+
+                        // Use displayName if available, otherwise fallback to truncated userId
+                        const senderName = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}...`;
+                        const senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400'; // Different color for sender name
+
+                        if (msg.userId === currentUserId) {
+                            alignmentClass = 'flex justify-end';
+                            bubbleColorClass = 'bg-gray-700 border border-green-600'; /* My messages, green border */
+                        } else {
+                            alignmentClass = 'flex justify-start';
+                            bubbleColorClass = 'bg-gray-800 border border-blue-600'; /* Other messages, blue border */
+                        }
+
+                        // Format timestamp if available
+                        const date = msg.timestamp ? new Date(msg.timestamp) : null;
+                        const timeString = date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Processing...';
+
+                        let contentHtml = '';
+                        if (msg.audioData) {
+                            // Display audio player for voice messages
+                            contentHtml = `
+                                <audio controls class="w-full mt-2 rounded-md bg-gray-600 outline-none focus:outline-none focus:ring-1 focus:ring-green-400">
+                                    <source src="${msg.audioData}" type="${msg.audioMimeType || 'audio/webm'}">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            `;
+                            // If it's a voice message, show "Voice Message" or sender's name and "Voice"
+                            const voiceMessageLabel = msg.userId === currentUserId ? "AUDIO LOG (OUTGOING)" : "AUDIO LOG (INCOMING)";
+                            contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${voiceMessageLabel}</div>` + contentHtml;
+                        } else {
+                            // Display text message
+                            contentHtml = `<div class="text-sm md:text-base ${textColorClass} tracking-tight">${msg.text}</div>`;
+                        }
+
+                        // Get current status from the global map for this sender
+                        const senderLiveStatus = userPresenceMap[msg.userId] ? userPresenceMap[msg.userId].status : 'unknown';
+                        const statusColorClass = senderLiveStatus === 'online' ? 'text-green-500' : (senderLiveStatus === 'offline' ? 'text-red-500' : 'text-gray-500');
+                        const statusText = senderLiveStatus === 'online' ? '[ONLINE]' : '[OFFLINE]';
+
+
+                        messageElement.className = `${alignmentClass} mb-3`;
+                        messageElement.innerHTML = `
+                            <div class="max-w-[80%] p-3.5 rounded-md shadow-inner ${bubbleColorClass} break-words font-['Roboto_Mono']">
+                                <div class="text-xs md:text-sm font-bold ${senderColorClass} mb-1 flex items-center">
+                                    <span>${senderName}</span>
+                                    <span class="status-text ${statusColorClass}" data-user-id="${msg.userId}">${statusText}</span>
+                                </div>
+                                ${contentHtml}
+                                <div class="text-xs text-right opacity-70 ${textColorClass} mt-2">${timeString}</div>
+                            </div>
+                        `;
+                        messageArea.appendChild(messageElement);
+
+                        // Update currentLastMessageTimestamp
+                        currentLastMessageTimestamp = Math.max(currentLastMessageTimestamp, msg.timestamp || 0);
+                    });
+
+                    // Play sound/notification for NEW messages only after initial load
+                    if (lastProcessedMessageTimestamp > 0) { // Check if it's not the very first load
+                        messagesArray.forEach(msg => {
+                            // Only trigger for messages newer than what was last processed and not from current user
+                            if ((msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId) {
+                                if (chatSound) {
+                                    chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
+                                }
+                                if (document.hidden) {
+                                    showNotification(msg);
+                                }
+                            }
+                        });
+                    }
+                    // Update global lastProcessedMessageTimestamp
+                    lastProcessedMessageTimestamp = currentLastMessageTimestamp;
+
+                } else {
+                    const noMessagesElement = document.createElement('div');
+                    noMessagesElement.className = "text-center text-gray-500 mt-8 text-base font-['Roboto_Mono']";
+                    noMessagesElement.textContent = "No data logs found. Start new transmission.";
+                    messageArea.appendChild(noMessagesElement);
+                    lastProcessedMessageTimestamp = 0; // Reset if no messages
+                }
+                messageArea.scrollTop = messageArea.scrollHeight;
+            }, (error) => {
+                console.error("Error fetching messages:", error);
+                loadingIndicator.style.display = 'none';
+                alertMessage("Failed to retrieve data logs. Check connection.", 'red');
+            });
+        }
+
+        // Event Listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Toggle emoji picker visibility
+        emojiButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            emojiPicker.classList.toggle('hidden');
+        });
+
+        // Hide emoji picker if clicking outside
+        document.addEventListener('click', (event) => {
+            if (!emojiPicker.contains(event.target) && !emojiButton.contains(event.target)) {
+                emojiPicker.classList.add('hidden');
+            }
+        });
+
+        // Set Display Name event listeners
+        setDisplayNameButton.addEventListener('click', setDisplayName);
+        displayNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                setDisplayName();
+            }
+        });
+
+        // Enable Notifications button event listener
+        enableNotificationsButton.addEventListener('click', requestNotificationPermission);
+
+        // Voice Message Event Listeners
+        recordVoiceButton.addEventListener('click', startRecording);
+        stopRecordButton.addEventListener('click', stopRecording);
+        sendVoiceButton.addEventListener('click', sendVoiceMessage);
+
+
+        /**
+         * Displays a custom alert message within the UI.
+         * @param {string} message - The message to display.
+         * @param {string} type - The type of alert ('red' for error, 'green' for success).
+         */
+        function alertMessage(message, type = 'blue') {
+            const existingAlert = document.getElementById('app-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            let bgColorClass = 'bg-blue-600'; // Default blue
+            if (type === 'red') bgColorClass = 'bg-red-700'; /* Darker red for errors */
+            else if (type === 'green') bgColorClass = 'bg-green-600'; /* Standard green for success */
+
+            const alertDiv = document.createElement('div');
+            alertDiv.id = 'app-alert';
+            alertDiv.className = `fixed bottom-4 left-1/2 -translate-x-1/2 ${bgColorClass} text-white px-6 py-3 rounded-lg app-alert z-50 transform scale-0 opacity-0 border border-gray-700`;
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+
+            // Animate in
+            setTimeout(() => {
+                alertDiv.classList.remove('scale-0', 'opacity-0');
+                alertDiv.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            // Animate out after 3 seconds
+            setTimeout(() => {
+                alertDiv.classList.remove('scale-100', 'opacity-100');
+                alertDiv.classList.add('scale-0', 'opacity-0');
+                alertDiv.addEventListener('transitionend', () => alertDiv.remove(), { once: true });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+�
