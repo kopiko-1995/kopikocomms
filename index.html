@@ -163,8 +163,8 @@
                 <!-- Emojis will be dynamically added here -->
             </div>
 
-            <!-- Main Input Row -->
-            <div class="flex items-end gap-2 md:gap-3">
+            <!-- Input and Send on separate rows -->
+            <div class="flex items-end gap-2 md:gap-3 mb-3">
                 <!-- Voice Recording Buttons -->
                 <button
                     id="record-voice-button"
@@ -203,13 +203,14 @@
                     placeholder="Enter message protocol..."
                     class="flex-grow p-2.5 md:p-3 md:p-4 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-lg transition duration-200"
                 />
-                <button
-                    id="send-button"
-                    class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2.5 px-5 md:py-3 md:py-4 px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 flex-shrink-0"
-                >
-                    Transmit
-                </button>
             </div>
+            <!-- Transmit button on its own row -->
+            <button
+                id="send-button"
+                class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2.5 px-5 md:py-3 md:py-4 md:px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
+            >
+                Transmit
+            </button>
         </div>
     </div>
 
@@ -435,9 +436,9 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
-            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '�', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '�', '📊', '📝'
+            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
         ];
 
         /**
@@ -527,7 +528,7 @@
                 recordingStatus.classList.remove('hidden');
                 sendVoiceButton.classList.add('hidden'); // Hide send button while recording
                 messageInput.classList.add('hidden'); // Hide text input
-                sendButton.classList.add('hidden'); // Hide text send button
+                sendButton.classList.add('hidden'); // Hide text send button (now at bottom)
                 emojiButton.classList.add('hidden'); // Hide emoji button
                 alertMessage("Audio log initiated...", 'blue');
 
