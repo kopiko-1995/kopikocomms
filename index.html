@@ -185,6 +185,13 @@
             font-size: 1rem;
             color: #e2e8f0; /* Light gray */
             border: 1px solid #4a5568;
+            cursor: pointer; /* Indicate clickable */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .online-users-modal-content ul li:hover {
+            background-color: rgba(16, 185, 129, 0.2); /* Light green tint on hover */
+            transform: translateY(-2px);
         }
 
         .online-users-modal-content ul li:last-child {
@@ -267,6 +274,12 @@
             </div>
         </div>
 
+        <!-- Current Chat Info (New) -->
+        <div id="chat-context-info" class="bg-gray-800 p-2 md:p-3 text-center text-sm md:text-base border-b border-gray-700 text-gray-400 font-bold flex items-center justify-center gap-2">
+            <span id="current-chat-title">Public Channel</span>
+            <button id="leave-private-chat-button" class="ml-2 px-3 py-1 bg-red-700 hover:bg-red-600 active:bg-red-800 text-white text-xs rounded-full hidden" title="Return to Public Channel">Exit Private</button>
+        </div>
+
         <!-- Message Area -->
         <div id="message-area" class="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 message-area bg-gray-900 border-t border-b border-gray-800">
             <!-- Messages will be injected here by JavaScript -->
@@ -331,7 +344,7 @@
 
                 <!-- Image Input and Send Button -->
                 <label for="image-input"
-                    class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
+                    class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor:pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
                     title="Attach Image"
                     id="image-button-label"
                 >
@@ -373,7 +386,7 @@
 
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -411,16 +424,15 @@
         // DOM elements for chat interface
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const messageArea = document.getElementById('message-area'); // Fixed: Removed duplicate 'document ='
+        const messageArea = document.getElementById('message-area'); 
         const displayUserId = document.getElementById('display-user-id');
-        const loadingIndicator = document.getElementById('loading-indicator');
+        // Removed global loadingIndicator and typingIndicatorElement as they will be fetched dynamically
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
         const displayNameInput = document.getElementById('display-name-input');
         const setDisplayNameButton = document.getElementById('set-display-name-button');
         const chatSound = document.getElementById('chat-sound');
         const myStatusIndicator = document.getElementById('my-status-indicator');
-        const typingIndicatorElement = document.getElementById('typing-indicator'); // Typing indicator element
 
         // Voice message elements
         const recordVoiceButton = document.getElementById('record-voice-button');
@@ -441,6 +453,11 @@
         const onlineUsersList = document.getElementById('online-users-list');
         const onlineUsersCloseButton = document.getElementById('online-users-close-button');
 
+        // Private Chat elements (New)
+        const chatContextInfo = document.getElementById('chat-context-info');
+        const currentChatTitle = document.getElementById('current-chat-title');
+        const leavePrivateChatButton = document.getElementById('leave-private-chat-button');
+
 
         // Voice message variables
         let mediaRecorder;
@@ -455,6 +472,11 @@
         // Typing indicator variables
         let typingTimeout = null;
         const TYPING_INDICATOR_TIMEOUT_MS = 3000; // Time after which typing status is cleared
+
+        // Private chat variables (New)
+        let currentPrivateChatUserId = null; // Stores the userId of the user in a private chat
+        let currentPrivateChatDisplayName = null; // Stores the displayName of the user in a private chat
+
 
         // Persistent User ID and Display Name
         let currentUserId = localStorage.getItem('tacticalChatUserId');
@@ -566,7 +588,7 @@
 
             initializeDisplayName();
             setupPresence();
-            listenForMessages();
+            listenForMessages(); // Start listening to public messages by default
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
             resetInputArea(); // Call reset to set initial UI state and scroll to bottom
             requestNotificationPermission(); // Request notification permission on app initialization
@@ -617,6 +639,9 @@
             // Online Users Modal Event Listeners
             onlineUsersIndicator.addEventListener('click', showOnlineUsersModal);
             onlineUsersCloseButton.addEventListener('click', hideOnlineUsersModal);
+
+            // Private chat event listener
+            leavePrivateChatButton.addEventListener('click', leavePrivateChat);
 
             // Add scroll listener for read receipts
             messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
@@ -725,11 +750,20 @@
                         userPresenceMap[userId] = userData;
                         onlineUsersCount++; // Increment count for each online user
 
-                        // Add user to the online users list in the modal
+                        // Add user to the online users list in the modal, making it clickable for private chat
                         const listItem = document.createElement('li');
                         listItem.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
-                        onlineUsersList.appendChild(listItem);
+                        listItem.dataset.userId = userId; // Store userId on the element
+                        listItem.dataset.displayName = userData.displayName; // Store displayName on the element
 
+                        if (userId === currentUserId) {
+                            listItem.classList.add('bg-green-800', 'border-green-600'); // Highlight current user
+                            listItem.textContent += ' (You)';
+                        } else {
+                            listItem.addEventListener('click', () => startPrivateChat(userId, userData.displayName));
+                        }
+                        onlineUsersList.appendChild(listItem);
+                        
                         if (userId !== currentUserId && userData.isTyping) {
                             anyOtherUserTyping = true;
                         }
@@ -739,12 +773,16 @@
                 updateAllMessageStatusesInUI(); // Update status for all displayed messages
 
                 // Update typing indicator visibility
-                if (anyOtherUserTyping) {
-                    typingIndicatorElement.classList.remove('hidden');
-                    // Scroll to bottom to show typing indicator if it's new
-                    messageArea.scrollTop = messageArea.scrollHeight;
-                } else {
-                    typingIndicatorElement.classList.add('hidden');
+                // Retrieve the typing indicator element here to ensure it's the current one
+                const typingIndicatorElement = document.getElementById('typing-indicator');
+                if (typingIndicatorElement) {
+                    if (anyOtherUserTyping) {
+                        typingIndicatorElement.classList.remove('hidden');
+                        // Scroll to bottom to show typing indicator if it's new
+                        messageArea.scrollTop = messageArea.scrollHeight;
+                    } else {
+                        typingIndicatorElement.classList.add('hidden');
+                    }
                 }
             });
         }
@@ -845,12 +883,63 @@
             onlineUsersModal.classList.add('hidden');
         }
 
+        /**
+         * Initiates a private chat with a selected user.
+         * @param {string} targetUserId - The Firebase User ID of the chat partner.
+         * @param {string} targetDisplayName - The display name of the chat partner.
+         */
+        function startPrivateChat(targetUserId, targetDisplayName) {
+            currentPrivateChatUserId = targetUserId;
+            currentPrivateChatDisplayName = targetDisplayName;
+
+            currentChatTitle.textContent = `Private Comms with ${targetDisplayName}`;
+            leavePrivateChatButton.classList.remove('hidden');
+            hideOnlineUsersModal(); // Close the online users modal
+
+            // Clear existing messages and load private messages (placeholder for now)
+            messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Establishing Private Channel...</div>
+                                    <div id="typing-indicator" class="typing-indicator hidden">
+                                    <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
+                                    </div>`;
+
+            // Stop listening to public messages and start listening to private messages
+            listenForMessages(); // Re-call to switch listener
+
+            alertMessage(`Initiating private comms with ${targetDisplayName}`, 'blue');
+            messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom
+        }
+
+        /**
+         * Leaves the current private chat and returns to the public channel.
+         */
+        function leavePrivateChat() {
+            console.log("[leavePrivateChat] Exiting private chat. Resetting state.");
+            currentPrivateChatUserId = null;
+            currentPrivateChatDisplayName = null;
+
+            currentChatTitle.textContent = 'Public Channel';
+            leavePrivateChatButton.classList.add('hidden');
+
+            // Show loading indicator immediately
+            messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Re-establishing Public Channel...</div>
+                                    <div id="typing-indicator" class="typing-indicator hidden">
+                                    <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
+                                    </div>`;
+            messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom to ensure loading indicator is visible
+
+            // Call listenForMessages to re-attach the listener for public messages.
+            listenForMessages(); 
+
+            alertMessage("Returned to public comms channel.", 'blue');
+        }
+
+
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '�', '🔑', '🔗', '🔒', '🔓',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '�',
+            '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
 
@@ -876,7 +965,8 @@
          * Cleans up old messages, retaining only the latest 30.
          */
         async function cleanupOldMessages() {
-            const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+            // Only cleanup public messages, private messages are handled by Firebase RTDB security rules by default
+            const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`); 
             try {
                 // Get a snapshot of all messages, ordered by timestamp
                 const snapshot = await get(query(messagesRef, orderByChild('timestamp')));
@@ -903,7 +993,7 @@
                             return remove(child(messagesRef, msgId));
                         });
                         await Promise.all(deletePromises);
-                        console.log(`Cleaned up ${messagesToDelete.length} old messages.`);
+                        console.log(`Cleaned up ${messagesToDelete.length} old public messages.`);
                     }
                 }
             } catch (error) {
@@ -918,28 +1008,79 @@
          */
         async function sendMessage() {
             const messageText = messageInput.value.trim();
+            let messagesPath = ''; // Determine if public or private
 
-            if (messageText && currentUserId) { // Text message
+            if (currentPrivateChatUserId) {
+                // Private chat message
+                const chatPartnerId = currentPrivateChatUserId;
+                const ids = [currentUserId, chatPartnerId].sort();
+                const chatId = `${ids[0]}_${ids[1]}`; // Consistent chat ID
+                messagesPath = `artifacts/${appId}/private_chats/${chatId}/messages`;
+            } else {
+                // Public chat message
+                messagesPath = `artifacts/${appId}/public/data/messages`;
+            }
+
+            if ((messageText || audioBlob || selectedImageBase64) && currentUserId) {
                 try {
-                    const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
-                    await push(messagesRef, {
-                        userId: currentUserId,
-                        displayName: currentDisplayName,
-                        text: messageText,
-                        timestamp: serverTimestamp()
-                    });
+                    const messagesRef = ref(db, messagesPath);
+
+                    if (messageText) { // Text message
+                        await push(messagesRef, {
+                            userId: currentUserId,
+                            displayName: currentDisplayName,
+                            text: messageText,
+                            timestamp: serverTimestamp(),
+                            type: 'text'
+                        });
+                    } else if (audioBlob) { // Audio message
+                        // Ensure audioBlob is processed before pushing
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64data = reader.result;
+                            await push(messagesRef, {
+                                userId: currentUserId,
+                                displayName: currentDisplayName,
+                                audioData: base64data,
+                                audioMimeType: audioMimeType,
+                                timestamp: serverTimestamp(),
+                                type: 'audio'
+                            });
+                            // Reset voice recording UI after sending
+                            audioBlob = null;
+                            audioChunks = [];
+                            audioMimeType = '';
+                            resetInputArea(); // Reset input area after sending and scroll to bottom
+                            if (!currentPrivateChatUserId) { // Only cleanup public messages this way
+                                cleanupOldMessages(); 
+                            }
+                        };
+                        reader.readAsDataURL(audioBlob);
+                        return; // Exit function after starting FileReader
+                    } else if (selectedImageBase64) { // Image message
+                        await push(messagesRef, {
+                            userId: currentUserId,
+                            displayName: currentDisplayName,
+                            imageData: selectedImageBase64,
+                            imageMimeType: selectedImageMimeType,
+                            timestamp: serverTimestamp(),
+                            type: 'image'
+                        });
+                    }
                 } catch (error) {
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
                 } finally {
-                    messageInput.value = ''; // Clear input field
-                    resetInputArea(); // Reset input area after sending and scroll to bottom
-                    cleanupOldMessages(); // Clean up old messages after sending
+                    // This finally block will execute for text and image messages.
+                    // For audio, it's handled inside the reader.onloadend callback.
+                    if (!audioBlob) { // Only run if not an audio message (which has its own reset)
+                        messageInput.value = ''; // Clear input field
+                        resetInputArea(); // Reset input area after sending and scroll to bottom
+                        if (!currentPrivateChatUserId) { // Only cleanup public messages this way
+                            cleanupOldMessages(); 
+                        }
+                    }
                 }
-            } else if (audioBlob && currentUserId) { // Audio message
-                sendVoiceMessage();
-            } else if (selectedImageBase64 && currentUserId) { // Image message
-                sendImageMessage();
             } else {
                 alertMessage("No content to transmit.", 'red');
                 resetInputArea(); // Scroll to bottom in case of no content
@@ -1031,33 +1172,7 @@
          */
         async function sendVoiceMessage() {
             if (audioBlob && currentUserId) {
-                // Convert Blob to Base64 string
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    const base64data = reader.result; // This will be data:audio/webm;base64,...
-
-                    try {
-                        const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
-                        await push(messagesRef, {
-                            userId: currentUserId,
-                            displayName: currentDisplayName,
-                            audioData: base64data, // Store base64 audio
-                            audioMimeType: audioMimeType, // Store mime type
-                            timestamp: serverTimestamp()
-                        });
-                    } catch (error) {
-                        console.error("Error transmitting audio log:", error);
-                        alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
-                    } finally {
-                        // Reset voice recording UI
-                        audioBlob = null;
-                        audioChunks = [];
-                        audioMimeType = '';
-                        resetInputArea(); // Reset input area after sending and scroll to bottom
-                        cleanupOldMessages(); // Clean up old messages after sending
-                    }
-                };
-                reader.readAsDataURL(audioBlob);
+                sendMessage(); // Use the general sendMessage function for this
             } else {
                 alertMessage("No audio log detected for transmission.", 'red');
                 resetInputArea(); // Scroll to bottom if no audio
@@ -1113,22 +1228,7 @@
          */
         async function sendImageMessage() {
             if (selectedImageBase64 && currentUserId) {
-                try {
-                    const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
-                    await push(messagesRef, {
-                        userId: currentUserId,
-                        displayName: currentDisplayName,
-                        imageData: selectedImageBase64,
-                        imageMimeType: selectedImageMimeType,
-                        timestamp: serverTimestamp()
-                    });
-                } catch (error) {
-                    console.error("Error transmitting image:", error);
-                    alertMessage("Failed to transmit image. It might be too large or an error occurred.", 'red');
-                } finally {
-                    resetInputArea(); // Reset input area after sending and scroll to bottom
-                    cleanupOldMessages(); // Clean up old messages after sending
-                }
+                sendMessage(); // Use the general sendMessage function for this
             } else {
                 alertMessage("No image detected for transmission.", 'red');
                 resetInputArea(); // Scroll to bottom if no image
@@ -1139,16 +1239,52 @@
         /**
          * Listens for new messages from the Firebase Realtime Database in real-time.
          */
-        function listenForMessages() {
-            // Path for public chat data
-            const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+        let publicMessageUnsubscribe = null;
+        let privateMessageUnsubscribe = null;
 
-            onValue(messagesRef, (snapshot) => {
-                loadingIndicator.style.display = 'none'; // Hide loading indicator once data starts coming
+        function listenForMessages() {
+            // Unsubscribe from previous listeners if any
+            if (publicMessageUnsubscribe) {
+                publicMessageUnsubscribe();
+                publicMessageUnsubscribe = null;
+                console.log("[listenForMessages] Unsubscribed from public messages.");
+            }
+            if (privateMessageUnsubscribe) {
+                privateMessageUnsubscribe();
+                privateMessageUnsubscribe = null;
+                console.log("[listenForMessages] Unsubscribed from private messages.");
+            }
+
+            let messagesRef;
+            if (currentPrivateChatUserId) {
+                // Listen to private messages
+                const ids = [currentUserId, currentPrivateChatUserId].sort();
+                const chatId = `${ids[0]}_${ids[1]}`;
+                messagesRef = ref(db, `artifacts/${appId}/private_chats/${chatId}/messages`);
+                console.log(`[listenForMessages] Actively listening to private chat: ${messagesRef.toString()}`);
+            } else {
+                // Listen to public messages
+                messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+                console.log(`[listenForMessages] Actively listening to public chat: ${messagesRef.toString()}`);
+            }
+
+            // Assign the correct unsubscribe function
+            const unsubscribe = onValue(messagesRef, (snapshot) => {
+                // Get fresh references to these elements *after* any potential innerHTML overwrites
+                const currentLoadingIndicator = document.getElementById('loading-indicator');
+                const currentTypingIndicator = document.getElementById('typing-indicator');
+
+                if (currentLoadingIndicator) {
+                    currentLoadingIndicator.style.display = 'none'; // Hide loading indicator once data starts coming
+                    // No need to remove it here, as it's part of the static HTML in the innerHTML reset
+                    // and its display is handled by 'none'
+                }
+                console.log(`[listenForMessages] Snapshot received for ${currentPrivateChatUserId ? 'private' : 'public'} chat. Path: ${messagesRef.toString()}. Snapshot exists: ${snapshot.exists()}.`);
                 
-                // Clear all messages except the typing indicator (if present)
+                // Clear all existing message elements, preserving only the current loading/typing indicators
                 Array.from(messageArea.children).forEach(child => {
-                    if (child.id !== 'typing-indicator' && child.id !== 'loading-indicator') {
+                    // Check if the child is neither the current loading indicator nor the current typing indicator
+                    if (child !== currentLoadingIndicator && child !== currentTypingIndicator) {
                         child.remove();
                     }
                 });
@@ -1167,7 +1303,10 @@
                     // Sort by timestamp if available, otherwise by key (which Firebase uses for push IDs, often chronological)
                     messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
+                    console.log(`[listenForMessages] Found ${messagesArray.length} messages in snapshot for ${currentPrivateChatUserId ? 'private' : 'public'} chat.`);
+
                     messagesArray.forEach(msg => {
+                        console.log("[listenForMessages] Processing message:", msg); // Log each message being processed
                         const messageElement = document.createElement('div');
                         let alignmentClass = '';
                         let bubbleColorClass = '';
@@ -1235,31 +1374,45 @@
                             </div>
                         `;
                         // Insert new messages before the typing indicator
-                        messageArea.insertBefore(messageElement, typingIndicatorElement);
+                        if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
+                            messageArea.insertBefore(messageElement, currentTypingIndicator);
+                        } else {
+                            // Fallback if for some reason typing indicator isn't found or is detached
+                            messageArea.appendChild(messageElement);
+                        }
 
                         // Update currentLastMessageTimestamp
                         currentLastMessageTimestamp = Math.max(currentLastMessageTimestamp, msg.timestamp || 0);
                     });
+
+                    // Ensure typing indicator is always at the very end after messages are appended
+                    if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
+                         messageArea.appendChild(currentTypingIndicator);
+                    }
+
 
                     // Play sound/notification for NEW messages only after initial load
                     if (lastProcessedMessageTimestamp > 0) { // Check if it's not the very first load
                         messagesArray.forEach(msg => {
                             // Only trigger for messages newer than what was last processed and not from current user
                             if ((msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId) {
-                                if (chatSound) {
-                                    chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
+                                // Only play sound/notification for public messages or private messages directly to me
+                                if (!currentPrivateChatUserId || (currentPrivateChatUserId && (msg.userId === currentPrivateChatUserId || msg.recipientId === currentUserId))) {
+                                    if (chatSound) {
+                                        chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
+                                    }
+                                    // Display browser notification for new messages from others
+                                    const senderNameForNotification = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}`;
+                                    let notificationBody = "";
+                                    if (msg.text) {
+                                        notificationBody = msg.text;
+                                    } else if (msg.audioData) {
+                                        notificationBody = "Audio Message";
+                                    } else if (msg.imageData) {
+                                        notificationBody = "Image Message";
+                                    }
+                                    displayNotification(`New message from ${senderNameForNotification}`, notificationBody);
                                 }
-                                // Display browser notification for new messages from others
-                                const senderNameForNotification = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}`;
-                                let notificationBody = "";
-                                if (msg.text) {
-                                    notificationBody = msg.text;
-                                } else if (msg.audioData) {
-                                    notificationBody = "Audio Message";
-                                } else if (msg.imageData) {
-                                    notificationBody = "Image Message";
-                                }
-                                displayNotification(`New message from ${senderNameForNotification}`, notificationBody);
                             }
                         });
                     }
@@ -1273,18 +1426,47 @@
                     updateAllMessageStatusesInUI();
                     updateMyLastReadMessageTimestamp(); // Also update my read status after messages load/scroll
                 } else {
+                    console.log(`[listenForMessages] No messages found at ${messagesRef.toString()}.`);
                     const noMessagesElement = document.createElement('div');
                     noMessagesElement.className = "text-center text-gray-500 mt-8 text-base font-['Roboto_Mono']";
-                    noMessagesElement.textContent = "No data logs found. Start new transmission.";
-                    messageArea.insertBefore(noMessagesElement, typingIndicatorElement); // Insert before typing indicator
+                    noMessagesElement.textContent = `No data logs found in ${currentPrivateChatUserId ? 'this private channel.' : 'the public channel.'} Start new transmission.`;
+                    
+                    // Clear existing messages except current indicators, then append 'no messages'
+                    Array.from(messageArea.children).forEach(child => {
+                        const childId = child.id;
+                        if (childId !== 'loading-indicator' && childId !== 'typing-indicator') {
+                            child.remove();
+                        }
+                    });
+                    
+                    // Ensure loading indicator is removed and noMessagesElement is added
+                    if (currentLoadingIndicator) {
+                        currentLoadingIndicator.remove();
+                    }
+                    messageArea.appendChild(noMessagesElement);
+
+                    // Ensure typing indicator is at the very end
+                    if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
+                        messageArea.appendChild(currentTypingIndicator);
+                    }
+
                     lastProcessedMessageTimestamp = 0; // Reset if no messages
                     messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom even if no messages
                 }
             }, (error) => {
-                console.error("Error fetching messages:", error);
-                loadingIndicator.style.display = 'none';
+                console.error("[listenForMessages] Error fetching messages:", error);
+                const currentLoadingIndicator = document.getElementById('loading-indicator');
+                if (currentLoadingIndicator) {
+                    currentLoadingIndicator.style.display = 'none';
+                }
                 alertMessage("Failed to retrieve data logs. Check connection.", 'red');
             });
+
+            if (currentPrivateChatUserId) {
+                privateMessageUnsubscribe = unsubscribe;
+            } else {
+                publicMessageUnsubscribe = unsubscribe;
+            }
         }
 
         /**
