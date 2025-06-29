@@ -215,6 +215,20 @@
         .modal-close-button:hover {
             transform: scale(1.1);
         }
+
+        /* Private Message Notification Dot */
+        .pm-notification-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #ef4444; /* Red */
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse-red 1s infinite;
+        }
+        .pm-notification-dot.hidden {
+            display: none;
+        }
     </style>
     <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oxanium:wght@400;700&display=swap" rel="stylesheet">
@@ -270,6 +284,7 @@
                 <!-- Online Users Indicator (New) -->
                 <div id="online-users-indicator" class="flex items-center text-xs md:text-sm font-medium text-gray-400 ml-4 cursor-pointer hover:text-green-300 transition-colors duration-200" title="Click to see online users">
                     <span class="font-bold text-green-400">Online:</span> <span id="online-count" class="font-extrabold text-green-300 ml-1">0</span>
+                    <span id="pm-notification-badge" class="pm-notification-dot hidden"></span> <!-- PM Notification Dot -->
                 </div>
             </div>
         </div>
@@ -426,7 +441,6 @@
         const sendButton = document.getElementById('send-button');
         const messageArea = document.getElementById('message-area'); 
         const displayUserId = document.getElementById('display-user-id');
-        // Removed global loadingIndicator and typingIndicatorElement as they will be fetched dynamically
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
         const displayNameInput = document.getElementById('display-name-input');
@@ -452,6 +466,7 @@
         const onlineUsersModal = document.getElementById('online-users-modal');
         const onlineUsersList = document.getElementById('online-users-list');
         const onlineUsersCloseButton = document.getElementById('online-users-close-button');
+        const pmNotificationBadge = document.getElementById('pm-notification-badge'); // New: Main PM notification badge
 
         // Private Chat elements (New)
         const chatContextInfo = document.getElementById('chat-context-info');
@@ -696,7 +711,7 @@
                 displayUserId.textContent = newName;
                 alertMessage(`Callsign set to "${newName}"`, 'green');
                 // Also update presence info with new display name
-                updateMyPresence(currentDisplayName, 'online');
+                // Note: setupPresence's onValue listener will handle actual DB update
             } else {
                 alertMessage("Callsign cannot be empty.", 'red');
             }
@@ -712,13 +727,19 @@
             onValue(connectedRef, (snapshot) => {
                 if (snapshot.val() === true) {
                     // We are connected. Set our status to online.
-                    // Include isTyping and lastReadMessageTimestamp
-                    set(currentUserPresenceRef, {
-                        displayName: currentDisplayName,
-                        status: 'online',
-                        isTyping: false, // Default to not typing
-                        lastReadMessageTimestamp: serverTimestamp() // Update on connect
-                    });
+                    // Fetch existing data to preserve 'unreadFrom' and 'hasUnreadPrivateMessages'
+                    get(currentUserPresenceRef).then(dataSnapshot => {
+                        const existingData = dataSnapshot.val() || {};
+                        set(currentUserPresenceRef, {
+                            displayName: currentDisplayName,
+                            status: 'online',
+                            isTyping: false, // Default to not typing
+                            lastReadMessageTimestamp: serverTimestamp(), // Update on connect
+                            hasUnreadPrivateMessages: existingData.hasUnreadPrivateMessages || false, // Preserve existing
+                            unreadFrom: existingData.unreadFrom || {} // Preserve existing
+                        });
+                    }).catch(e => console.error("Error fetching presence data on connect:", e));
+
                     // Set up onDisconnect to mark us offline and not typing when connection is lost/app closed
                     onDisconnect(currentUserPresenceRef).set({
                         displayName: currentDisplayName,
@@ -737,17 +758,27 @@
 
             // Listen for all users' presence changes to update the global map and UI
             onValue(ref(db, `artifacts/${appId}/public/data/users_presence`), (snapshot) => {
+                console.log("[setupPresence] Users presence snapshot received.");
                 userPresenceMap = {}; // Clear map to rebuild
                 let anyOtherUserTyping = false;
                 let onlineUsersCount = 0; // Initialize online user count
+                let totalUnreadPrivateMessages = 0; // NEW: Count unread PMs for current user
 
                 onlineUsersList.innerHTML = ''; // Clear previous list
+
+                // Get current user's unreadFrom state for badge calculation
+                const currentUserData = snapshot.val()?.[currentUserId];
+                const currentUserUnreadFrom = currentUserData?.unreadFrom || {};
+                console.log(`[setupPresence] Current user (${currentUserId}) unreadFrom state:`, currentUserUnreadFrom);
+
 
                 snapshot.forEach((childSnapshot) => {
                     const userData = childSnapshot.val();
                     const userId = childSnapshot.key;
+                    
+                    userPresenceMap[userId] = userData; // Always store user data even if offline
+
                     if (userData.status === 'online') {
-                        userPresenceMap[userId] = userData;
                         onlineUsersCount++; // Increment count for each online user
 
                         // Add user to the online users list in the modal, making it clickable for private chat
@@ -755,6 +786,18 @@
                         listItem.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
                         listItem.dataset.userId = userId; // Store userId on the element
                         listItem.dataset.displayName = userData.displayName; // Store displayName on the element
+
+                        // Check for unread private messages *from this user* to the *current user*
+                        const hasUnreadFromThisUser = currentUserUnreadFrom[userId];
+                        console.log(`[setupPresence] User ${userId} (${userData.displayName}) - unreadFrom current user: ${hasUnreadFromThisUser}`);
+
+                        if (userId !== currentUserId && hasUnreadFromThisUser) {
+                            const pmDot = document.createElement('span');
+                            pmDot.classList.add('pm-notification-dot');
+                            listItem.appendChild(pmDot);
+                            totalUnreadPrivateMessages++; // Increment for main badge
+                            console.log(`[setupPresence] Adding PM dot for ${userData.displayName}. Total unread: ${totalUnreadPrivateMessages}`);
+                        }
 
                         if (userId === currentUserId) {
                             listItem.classList.add('bg-green-800', 'border-green-600'); // Highlight current user
@@ -770,10 +813,21 @@
                     }
                 });
                 onlineCountSpan.textContent = onlineUsersCount; // Update the displayed count
+                
+                // NEW: Update the main PM notification badge
+                if (pmNotificationBadge) {
+                    if (totalUnreadPrivateMessages > 0) {
+                        pmNotificationBadge.classList.remove('hidden');
+                        console.log(`[setupPresence] Main PM badge shown. Total unread: ${totalUnreadPrivateMessages}`);
+                    } else {
+                        pmNotificationBadge.classList.add('hidden');
+                        console.log(`[setupPresence] Main PM badge hidden. Total unread: ${totalUnreadPrivateMessages}`);
+                    }
+                }
+
                 updateAllMessageStatusesInUI(); // Update status for all displayed messages
 
                 // Update typing indicator visibility
-                // Retrieve the typing indicator element here to ensure it's the current one
                 const typingIndicatorElement = document.getElementById('typing-indicator');
                 if (typingIndicatorElement) {
                     if (anyOtherUserTyping) {
@@ -793,11 +847,17 @@
          */
         function setMyTypingStatus(isTyping) {
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-            set(currentUserPresenceRef, {
-                ...userPresenceMap[currentUserId], // Preserve other data like displayName, status, lastReadMessageTimestamp
-                isTyping: isTyping,
-                timestamp: serverTimestamp() // Update timestamp to keep presence active
-            });
+            // Fetch current state to avoid overwriting unreadFrom and hasUnreadPrivateMessages
+            get(currentUserPresenceRef).then(snapshot => {
+                const currentData = snapshot.val() || {};
+                set(currentUserPresenceRef, {
+                    ...currentData, // Preserve existing data
+                    displayName: currentDisplayName, // Ensure display name is current
+                    status: 'online', // Ensure status is online
+                    isTyping: isTyping,
+                    timestamp: serverTimestamp() // Update timestamp to keep presence active
+                });
+            }).catch(error => console.error("Error setting typing status:", error));
         }
 
         /**
@@ -816,10 +876,15 @@
                     const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
                     // Only update if the new timestamp is greater than the current one in DB
                     if (!userPresenceMap[currentUserId] || userPresenceMap[currentUserId].lastReadMessageTimestamp < lastMessageTimestamp) {
-                        set(currentUserPresenceRef, {
-                            ...userPresenceMap[currentUserId], // Preserve other data
-                            lastReadMessageTimestamp: lastMessageTimestamp
-                        });
+                        // Fetch current data to avoid overwriting unread private message flags
+                        get(currentUserPresenceRef).then(snapshot => {
+                            const currentData = snapshot.val() || {};
+                            set(currentUserPresenceRef, {
+                                ...currentData, // Preserve existing data
+                                lastReadMessageTimestamp: lastMessageTimestamp,
+                                timestamp: serverTimestamp() // Update timestamp to keep presence active
+                            });
+                        }).catch(error => console.error("Error updating last read timestamp:", error));
                     }
                 }
             }
@@ -853,6 +918,7 @@
                 const messageTimestamp = parseInt(messageElement.dataset.timestamp);
                 const seenBy = [];
                 for (const userId in userPresenceMap) {
+                    // Only consider "seen by" for other online users who have read up to this message
                     if (userId !== currentUserId && userPresenceMap[userId].status === 'online' &&
                         userPresenceMap[userId].lastReadMessageTimestamp &&
                         userPresenceMap[userId].lastReadMessageTimestamp >= messageTimestamp) {
@@ -889,6 +955,7 @@
          * @param {string} targetDisplayName - The display name of the chat partner.
          */
         function startPrivateChat(targetUserId, targetDisplayName) {
+            console.log(`[startPrivateChat] Starting private chat with ${targetDisplayName} (${targetUserId})`);
             currentPrivateChatUserId = targetUserId;
             currentPrivateChatDisplayName = targetDisplayName;
 
@@ -901,6 +968,23 @@
                                     <div id="typing-indicator" class="typing-indicator hidden">
                                     <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
                                     </div>`;
+
+            // Mark unread private messages from this sender as read for the current user
+            const currentUserUnreadFromSpecificRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}/unreadFrom/${targetUserId}`);
+            remove(currentUserUnreadFromSpecificRef).then(() => {
+                console.log(`[startPrivateChat] Marked unread messages from ${targetDisplayName} as read for ${currentUserId}.`);
+                // After marking as read for this specific sender, check if there are any other unread messages left
+                const currentUserUnreadFromRootRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}/unreadFrom`);
+                get(currentUserUnreadFromRootRef).then(snapshot => {
+                    if (!snapshot.exists() || Object.keys(snapshot.val()).length === 0) {
+                        const currentUserPresenceRootRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+                        update(currentUserPresenceRootRef, { hasUnreadPrivateMessages: false })
+                            .then(() => console.log(`[startPrivateChat] hasUnreadPrivateMessages set to false for ${currentUserId}.`))
+                            .catch(e => console.error("[startPrivateChat] Error updating hasUnreadPrivateMessages to false:", e));
+                    }
+                }).catch(e => console.error("[startPrivateChat] Error checking unreadFrom for global badge:", e));
+            }).catch(e => console.error("[startPrivateChat] Error removing unreadFrom flag:", e));
+
 
             // Stop listening to public messages and start listening to private messages
             listenForMessages(); // Re-call to switch listener
@@ -938,7 +1022,7 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '�',
+            '🎯', '�', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
@@ -1024,28 +1108,34 @@
             if ((messageText || audioBlob || selectedImageBase64) && currentUserId) {
                 try {
                     const messagesRef = ref(db, messagesPath);
+                    const messagePayload = {
+                        userId: currentUserId,
+                        displayName: currentDisplayName,
+                        timestamp: serverTimestamp(),
+                    };
 
                     if (messageText) { // Text message
-                        await push(messagesRef, {
-                            userId: currentUserId,
-                            displayName: currentDisplayName,
-                            text: messageText,
-                            timestamp: serverTimestamp(),
-                            type: 'text'
-                        });
+                        messagePayload.text = messageText;
+                        messagePayload.type = 'text';
                     } else if (audioBlob) { // Audio message
-                        // Ensure audioBlob is processed before pushing
+                        // For audio, we need to read the blob first then send
                         const reader = new FileReader();
                         reader.onloadend = async () => {
-                            const base64data = reader.result;
-                            await push(messagesRef, {
-                                userId: currentUserId,
-                                displayName: currentDisplayName,
-                                audioData: base64data,
-                                audioMimeType: audioMimeType,
-                                timestamp: serverTimestamp(),
-                                type: 'audio'
-                            });
+                            messagePayload.audioData = reader.result;
+                            messagePayload.audioMimeType = audioMimeType;
+                            messagePayload.type = 'audio';
+                            await push(messagesRef, messagePayload);
+
+                            // NEW: Mark recipient with unread PMs if private chat
+                            if (currentPrivateChatUserId) {
+                                console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
+                                const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
+                                update(recipientPresenceRef, {
+                                    hasUnreadPrivateMessages: true,
+                                    [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                                }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                            }
+
                             // Reset voice recording UI after sending
                             audioBlob = null;
                             audioChunks = [];
@@ -1058,15 +1148,24 @@
                         reader.readAsDataURL(audioBlob);
                         return; // Exit function after starting FileReader
                     } else if (selectedImageBase64) { // Image message
-                        await push(messagesRef, {
-                            userId: currentUserId,
-                            displayName: currentDisplayName,
-                            imageData: selectedImageBase64,
-                            imageMimeType: selectedImageMimeType,
-                            timestamp: serverTimestamp(),
-                            type: 'image'
-                        });
+                        messagePayload.imageData = selectedImageBase64;
+                        messagePayload.imageMimeType = selectedImageMimeType;
+                        messagePayload.type = 'image';
                     }
+
+                    // Push message for text and image
+                    await push(messagesRef, messagePayload);
+
+                    // NEW: Mark recipient with unread PMs if private chat (for text and image messages)
+                    if (currentPrivateChatUserId) {
+                        console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
+                        const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
+                        update(recipientPresenceRef, {
+                            hasUnreadPrivateMessages: true,
+                            [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                        }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
+                    }
+
                 } catch (error) {
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
