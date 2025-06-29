@@ -260,13 +260,14 @@
         // Access global variables for app ID
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // DOM elements
+        // DOM elements for password screen
         const passwordScreen = document.getElementById('password-screen');
         const passwordInput = document.getElementById('password-input');
         const loginButton = document.getElementById('login-button');
         const passwordError = document.getElementById('password-error');
         const chatAppContainer = document.getElementById('chat-app-container');
 
+        // DOM elements for chat interface
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const messageArea = document.getElementById('message-area');
@@ -278,7 +279,6 @@
         const setDisplayNameButton = document.getElementById('set-display-name-button');
         const chatSound = document.getElementById('chat-sound');
         const myStatusIndicator = document.getElementById('my-status-indicator');
-        // Removed recipientSelect DOM element reference: const recipientSelect = document.getElementById('recipient-select');
 
         // Voice message elements
         const recordVoiceButton = document.getElementById('record-voice-button');
@@ -301,12 +301,12 @@
         let currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${currentUserId.substring(0, 4).toUpperCase()}`;
 
         // Global map to store online status of all users
-        let userPresenceMap = {}; // Changed to let to allow reassignment in setupPresence
+        let userPresenceMap = {};
         // Timestamp of the last message processed for sound/notification
         let lastProcessedMessageTimestamp = 0;
 
         const CORRECT_PASSWORD = "rexchat";
-        const PASSWORD_REMEMBER_KEY = "tacticalChatPasswordRemembered";
+        const PASSWORD_REMEMBER_KEY = "tacticalChatPasswordRemembered"; // Key to remember successful password entry
 
         /**
          * Initializes the chat application after successful password authentication.
@@ -420,26 +420,9 @@
                          userPresenceMap[childSnapshot.key] = userData;
                     }
                 });
-                // populateRecipientSelect(); // Removed call to populateRecipientSelect
                 updateAllMessageStatusesInUI(); // Update status for all displayed messages
             });
         }
-
-        // Removed populateRecipientSelect function:
-        // function populateRecipientSelect() {
-        //     recipientSelect.innerHTML = '<option value="">Public Transmission</option>'; // Always start with Public
-        //     const sortedUsers = Object.keys(userPresenceMap)
-        //                             .filter(userId => userId !== currentUserId) // Exclude current user
-        //                             .sort((a, b) => userPresenceMap[a].displayName.localeCompare(userPresenceMap[b].displayName)); // Sort by display name
-
-        //     sortedUsers.forEach(userId => {
-        //         const user = userPresenceMap[userId];
-        //         const option = document.createElement('option');
-        //         option.value = userId;
-        //         option.textContent = `${user.displayName} (Unit ID: ${userId.substring(0, 4).toUpperCase()}) ${user.status === 'online' ? '🟢' : '🔴'}`;
-        //         recipientSelect.appendChild(option);
-        //     });
-        // }
 
 
         /**
@@ -476,11 +459,11 @@
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
-            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
+            '👍', '✅', '❌', '⚠️', '�', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '�', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
+            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
         ];
 
         /**
@@ -506,24 +489,18 @@
          */
         async function sendMessage() {
             const messageText = messageInput.value.trim();
-            // Removed recipientId logic: const recipientId = recipientSelect.value;
 
             if (messageText && currentUserId) {
                 try {
+                    // Path for public chat data
                     const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
-                    const messagePayload = {
+                    await push(messagesRef, {
                         userId: currentUserId,
                         displayName: currentDisplayName,
                         text: messageText,
                         timestamp: serverTimestamp()
-                    };
-
-                    // Removed conditional recipientId logic
-                    alertMessage("Public transmission initiated...", 'green');
-
-                    await push(messagesRef, messagePayload);
-                    messageInput.value = ''; // Clear text input
-                    // Removed clearing recipientSelect: recipientSelect.value = '';
+                    });
+                    messageInput.value = ''; // Clear input field
                 } catch (error) {
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
@@ -569,14 +546,13 @@
 
                 mediaRecorder.start();
                 recordVoiceButton.classList.add('record-button-active'); // Add pulsing animation
-                stopRecordButton.classList.remove('hidden');
+                stopRecordButton.classList.add('hidden'); // Ensure stop is initially hidden
                 recordVoiceButton.classList.add('hidden'); // Hide record button while recording
                 recordingStatus.classList.remove('hidden');
                 sendVoiceButton.classList.add('hidden'); // Hide send button while recording
                 messageInput.classList.add('hidden'); // Hide text input
                 sendButton.classList.add('hidden'); // Hide text send button (now at bottom)
                 emojiButton.classList.add('hidden'); // Hide emoji button
-                // Removed recipientSelect.classList.add('hidden');
                 alertMessage("Audio log initiated...", 'blue');
 
             } /* catches (err) */ catch (err) {
@@ -591,7 +567,6 @@
                 messageInput.classList.remove('hidden');
                 sendButton.classList.remove('hidden');
                 emojiButton.classList.remove('hidden');
-                // Removed recipientSelect.classList.remove('hidden');
             }
         }
 
@@ -615,22 +590,17 @@
                 const reader = new FileReader();
                 reader.onloadend = async () => {
                     const base64data = reader.result; // This will be data:audio/webm;base64,...
-                    // Removed recipientId logic: const recipientId = recipientSelect.value;
 
                     try {
                         const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
-                        const messagePayload = {
+                        await push(messagesRef, {
                             userId: currentUserId,
                             displayName: currentDisplayName,
                             audioData: base64data, // Store base64 audio
                             audioMimeType: audioMimeType, // Store mime type
                             timestamp: serverTimestamp()
-                        };
-
-                        // Removed conditional recipientId logic
+                        });
                         alertMessage("Public audio log transmitted. Status: COMPLETE.", 'green');
-                        
-                        await push(messagesRef, messagePayload);
                         // Reset voice recording UI
                         audioBlob = null;
                         audioChunks = [];
@@ -640,8 +610,6 @@
                         messageInput.classList.remove('hidden'); // Show text input
                         sendButton.classList.remove('hidden'); // Show text send button
                         emojiButton.classList.remove('hidden'); // Show emoji button
-                        // Removed recipientSelect.classList.remove('hidden');
-                        // Removed clearing recipientSelect: recipientSelect.value = '';
                     } catch (error) {
                         console.error("Error transmitting audio log:", error);
                         alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
@@ -680,11 +648,6 @@
                     messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
                     messagesArray.forEach(msg => {
-                        // Removed isPrivate and shouldShow logic
-                        // const isPrivate = !!msg.recipientId;
-                        // const shouldShow = !isPrivate || (msg.recipientId === currentUserId) || (msg.userId === currentUserId);
-                        // if (!shouldShow) { return; }
-
                         const messageElement = document.createElement('div');
                         let alignmentClass = '';
                         let bubbleColorClass = '';
@@ -692,7 +655,7 @@
 
                         // Use displayName if available, otherwise fallback to truncated userId
                         const senderName = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}...`;
-                        let senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400'; // Different color for sender name
+                        const senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400'; // Different color for sender name
 
                         if (msg.userId === currentUserId) {
                             alignmentClass = 'flex justify-end';
@@ -701,14 +664,6 @@
                             alignmentClass = 'flex justify-start';
                             bubbleColorClass = 'bg-gray-800 border border-blue-600'; /* Other messages, blue border */
                         }
-
-                        // Removed override colors for private messages
-                        // if (isPrivate) {
-                        //     bubbleColorClass = (msg.userId === currentUserId) ? 'bg-purple-900 border-purple-600' : 'bg-indigo-900 border-indigo-600';
-                        //     senderColorClass = (msg.userId === currentUserId) ? 'text-purple-400' : 'text-indigo-400';
-                        //     textColorClass = 'text-gray-100';
-                        // }
-
 
                         // Format timestamp if available
                         const date = msg.timestamp ? new Date(msg.timestamp) : null;
@@ -725,12 +680,10 @@
                             `;
                             // If it's a voice message, show "Voice Message" or sender's name and "Voice"
                             let voiceMessageLabel = msg.userId === currentUserId ? "AUDIO LOG (OUTGOING)" : "AUDIO LOG (INCOMING)";
-                            // Removed private voice message label logic
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${voiceMessageLabel}</div>` + contentHtml;
                         } else {
                             // Display text message
                             let messageText = msg.text;
-                            // Removed private text message tag logic
                             contentHtml = `<div class="text-sm md:text-base ${textColorClass} tracking-tight">${messageText}</div>`;
                         }
 
@@ -760,11 +713,8 @@
                     // Play sound/notification for NEW messages only after initial load
                     if (lastProcessedMessageTimestamp > 0) { // Check if it's not the very first load
                         messagesArray.forEach(msg => {
-                            // Only trigger for messages newer than what was last processed, not from current user, AND is a public message OR private for THIS user
-                            const isNewAndNotMine = (msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId;
-                            // const isPublicOrForMe = !msg.recipientId || msg.recipientId === currentUserId; // Removed this condition
-
-                            if (isNewAndNotMine /* && isPublicOrForMe */) { // Now only checks new and not-mine
+                            // Only trigger for messages newer than what was last processed and not from current user
+                            if ((msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId) {
                                 if (chatSound) {
                                     chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
                                 }
