@@ -248,8 +248,7 @@
         const displayNameInput = document.getElementById('display-name-input');
         const setDisplayNameButton = document.getElementById('set-display-name-button');
         const chatSound = document.getElementById('chat-sound');
-        const enableNotificationsButton = document.getElementById('enable-notifications-button'); // This will now be undefined after removing from HTML
-        const myStatusIndicator = document.getElementById('my-status-indicator'); // New: My own status indicator
+        const myStatusIndicator = document.getElementById('my-status-indicator'); // My own status indicator
 
         // Voice message elements
         const recordVoiceButton = document.getElementById('record-voice-button');
@@ -264,7 +263,13 @@
         let audioMimeType = '';
 
         // Assign a random user ID without Firebase authentication
-        const currentUserId = crypto.randomUUID();
+        // Check localStorage for a persistent ID
+        let currentUserId = localStorage.getItem('tacticalChatUserId');
+        if (!currentUserId) {
+            currentUserId = crypto.randomUUID();
+            localStorage.setItem('tacticalChatUserId', currentUserId);
+        }
+        
         let currentDisplayName = `Unit-${currentUserId.substring(0, 4).toUpperCase()}`; // Default military-style display name
 
         // Global map to store online status of all users
@@ -429,8 +434,8 @@
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
-            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
-            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '�', '✔️', '✖️',
+            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '�', '⚙️', '🛡️',
+            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
