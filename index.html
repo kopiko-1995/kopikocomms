@@ -111,6 +111,24 @@
         .status-text.offline {
             color: #ef4444; /* Red */
         }
+
+        /* Typing indicator specific styles */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem; /* text-xs */
+            color: #10b981; /* Green */
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        .typing-indicator span {
+            animation: blink 1s infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
     </style>
     <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oxanium:wght@400;700&display=swap" rel="stylesheet">
@@ -170,6 +188,10 @@
         <div id="message-area" class="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 message-area bg-gray-900 border-t border-b border-gray-800">
             <!-- Messages will be injected here by JavaScript -->
             <div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Awaiting Transmission...</div>
+            <!-- Typing indicator will be appended here -->
+            <div id="typing-indicator" class="typing-indicator hidden">
+                <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
+            </div>
         </div>
 
         <!-- Message Input and Emoji/Voice Controls -->
@@ -265,7 +287,7 @@
     <script type="module">
         // Import Firebase functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp, get, query, orderByChild, remove, child } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
         // Your web app's Firebase configuration (provided by the user)
         const firebaseConfig = {
@@ -304,6 +326,7 @@
         const setDisplayNameButton = document.getElementById('set-display-name-button');
         const chatSound = document.getElementById('chat-sound');
         const myStatusIndicator = document.getElementById('my-status-indicator');
+        const typingIndicatorElement = document.getElementById('typing-indicator'); // Typing indicator element
 
         // Voice message elements
         const recordVoiceButton = document.getElementById('record-voice-button');
@@ -327,6 +350,9 @@
         let selectedImageBase64 = null;
         let selectedImageMimeType = null;
 
+        // Typing indicator variables
+        let typingTimeout = null;
+        const TYPING_INDICATOR_TIMEOUT_MS = 3000; // Time after which typing status is cleared
 
         // Persistent User ID and Display Name
         let currentUserId = localStorage.getItem('tacticalChatUserId');
@@ -336,7 +362,7 @@
         }
         let currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${currentUserId.substring(0, 4).toUpperCase()}`;
 
-        // Global map to store online status of all users
+        // Global map to store online status and typing status of all users
         let userPresenceMap = {};
         // Timestamp of the last message processed for sound/notification
         let lastProcessedMessageTimestamp = 0;
@@ -351,6 +377,7 @@
             sendButton.classList.remove('hidden');
             emojiButton.classList.remove('hidden'); // Show emoji button
             recordVoiceButton.classList.remove('hidden'); // Show record button
+            imageButtonLabel.classList.remove('hidden'); // Show image button label
 
             // Hide voice specific controls
             stopRecordButton.classList.add('hidden');
@@ -363,6 +390,12 @@
             imageInput.value = ''; // Clear file input
             selectedImageBase64 = null;
             selectedImageMimeType = null;
+
+            // Clear typing status when input area is reset (e.g., after sending)
+            setMyTypingStatus(false);
+            
+            // Always scroll to the bottom after resetting input area (e.g., after sending a message)
+            messageArea.scrollTop = messageArea.scrollHeight;
         }
 
         /**
@@ -377,7 +410,7 @@
             setupPresence();
             listenForMessages();
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
-            resetInputArea(); // Initialize input area state
+            // No need to call resetInputArea here for scrolling; listenForMessages will handle initial scroll.
 
             // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
@@ -385,6 +418,15 @@
                 if (e.key === 'Enter') {
                     sendMessage();
                 }
+            });
+
+            // Typing indicator event listener for text input
+            messageInput.addEventListener('input', () => {
+                setMyTypingStatus(true); // Start typing
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    setMyTypingStatus(false); // Stop typing after timeout
+                }, TYPING_INDICATOR_TIMEOUT_MS);
             });
 
             emojiButton.addEventListener('click', (event) => {
@@ -411,6 +453,9 @@
 
             imageInput.addEventListener('change', handleImageSelection);
             sendImageButton.addEventListener('click', sendImageMessage);
+
+            // Add scroll listener for read receipts
+            messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
         }
 
         /**
@@ -468,7 +513,6 @@
             }
         }
 
-
         /**
          * Sets up the Firebase Realtime Database presence system for the current user.
          */
@@ -479,15 +523,18 @@
             onValue(connectedRef, (snapshot) => {
                 if (snapshot.val() === true) {
                     // We are connected. Set our status to online.
+                    // Include isTyping and lastReadMessageTimestamp
                     set(currentUserPresenceRef, {
                         displayName: currentDisplayName,
                         status: 'online',
-                        timestamp: serverTimestamp()
+                        isTyping: false, // Default to not typing
+                        lastReadMessageTimestamp: serverTimestamp() // Update on connect
                     });
-                    // Set up onDisconnect to mark us offline when connection is lost/app closed
+                    // Set up onDisconnect to mark us offline and not typing when connection is lost/app closed
                     onDisconnect(currentUserPresenceRef).set({
                         displayName: currentDisplayName,
                         status: 'offline',
+                        isTyping: false,
                         timestamp: serverTimestamp()
                     });
                     myStatusIndicator.classList.remove('offline');
@@ -502,14 +549,66 @@
             // Listen for all users' presence changes to update the global map and UI
             onValue(ref(db, `artifacts/${appId}/public/data/users_presence`), (snapshot) => {
                 userPresenceMap = {}; // Clear map to rebuild
+                let anyOtherUserTyping = false;
                 snapshot.forEach((childSnapshot) => {
                     const userData = childSnapshot.val();
-                    if (userData.status === 'online') { // Only add online users to the map
-                         userPresenceMap[childSnapshot.key] = userData;
+                    const userId = childSnapshot.key;
+                    if (userData.status === 'online') {
+                        userPresenceMap[userId] = userData;
+                        if (userId !== currentUserId && userData.isTyping) {
+                            anyOtherUserTyping = true;
+                        }
                     }
                 });
                 updateAllMessageStatusesInUI(); // Update status for all displayed messages
+
+                // Update typing indicator visibility
+                if (anyOtherUserTyping) {
+                    typingIndicatorElement.classList.remove('hidden');
+                    // Scroll to bottom to show typing indicator if it's new
+                    messageArea.scrollTop = messageArea.scrollHeight;
+                } else {
+                    typingIndicatorElement.classList.add('hidden');
+                }
             });
+        }
+
+        /**
+         * Sets the current user's typing status in Firebase.
+         * @param {boolean} isTyping - True if typing, false otherwise.
+         */
+        function setMyTypingStatus(isTyping) {
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+            set(currentUserPresenceRef, {
+                ...userPresenceMap[currentUserId], // Preserve other data like displayName, status, lastReadMessageTimestamp
+                isTyping: isTyping,
+                timestamp: serverTimestamp() // Update timestamp to keep presence active
+            });
+        }
+
+        /**
+         * Updates the current user's last read message timestamp.
+         */
+        function updateMyLastReadMessageTimestamp() {
+            // Only update if scrolled near the bottom
+            const tolerance = 50; // pixels from the bottom
+            if (messageArea.scrollHeight - messageArea.scrollTop <= messageArea.clientHeight + tolerance) {
+                // Get the timestamp of the last message displayed
+                const allMessageElements = messageArea.querySelectorAll('.mb-3'); // Select all message bubbles
+                const lastMessageElement = allMessageElements.length > 0 ? allMessageElements[allMessageElements.length - 1] : null;
+
+                if (lastMessageElement && lastMessageElement.dataset.timestamp) { // Check if it's a message that needs seen status
+                    const lastMessageTimestamp = parseInt(lastMessageElement.dataset.timestamp);
+                    const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+                    // Only update if the new timestamp is greater than the current one in DB
+                    if (!userPresenceMap[currentUserId] || userPresenceMap[currentUserId].lastReadMessageTimestamp < lastMessageTimestamp) {
+                        set(currentUserPresenceRef, {
+                            ...userPresenceMap[currentUserId], // Preserve other data
+                            lastReadMessageTimestamp: lastMessageTimestamp
+                        });
+                    }
+                }
+            }
         }
 
 
@@ -531,6 +630,29 @@
                     indicator.style.color = '#ef4444'; /* Tailwind red-500 */
                 }
             });
+
+            // Update read receipts for my messages
+            document.querySelectorAll('.my-message-seen-status').forEach(seenStatusDiv => {
+                const messageElement = seenStatusDiv.closest('.mb-3'); // Get the parent message element
+                if (!messageElement) return; // Should not happen if HTML structure is correct
+
+                const messageTimestamp = parseInt(messageElement.dataset.timestamp);
+                const seenBy = [];
+                for (const userId in userPresenceMap) {
+                    if (userId !== currentUserId && userPresenceMap[userId].status === 'online' &&
+                        userPresenceMap[userId].lastReadMessageTimestamp &&
+                        userPresenceMap[userId].lastReadMessageTimestamp >= messageTimestamp) {
+                        seenBy.push(userPresenceMap[userId].displayName || `Unit-${userId.substring(0,4).toUpperCase()}`);
+                    }
+                }
+
+                if (seenBy.length > 0) {
+                    seenStatusDiv.textContent = `Seen by: ${seenBy.join(', ')}`;
+                    seenStatusDiv.classList.remove('hidden');
+                } else {
+                    seenStatusDiv.classList.add('hidden');
+                }
+            });
         }
 
         /**
@@ -539,6 +661,7 @@
         function updateMyPresence(displayName, status) {
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
             set(currentUserPresenceRef, {
+                ...userPresenceMap[currentUserId], // Preserve other data
                 displayName: displayName,
                 status: status,
                 timestamp: serverTimestamp()
@@ -551,7 +674,7 @@
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '�', '🔑', '🔗', '🔒', '🔓',
+            '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
 
@@ -574,6 +697,46 @@
         }
 
         /**
+         * Cleans up old messages, retaining only the latest 30.
+         */
+        async function cleanupOldMessages() {
+            const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+            try {
+                // Get a snapshot of all messages, ordered by timestamp
+                const snapshot = await get(query(messagesRef, orderByChild('timestamp')));
+                
+                if (snapshot.exists()) {
+                    const messagesToDelete = [];
+                    const messagesArray = [];
+
+                    snapshot.forEach(childSnapshot => {
+                        messagesArray.push({ id: childSnapshot.key, ...childSnapshot.val() });
+                    });
+
+                    // Sort messages by timestamp to ensure correct ordering for deletion
+                    messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                    if (messagesArray.length > 30) {
+                        // Identify messages to delete (all except the last 30)
+                        for (let i = 0; i < messagesArray.length - 30; i++) {
+                            messagesToDelete.push(messagesArray[i].id);
+                        }
+
+                        // Delete each identified message
+                        const deletePromises = messagesToDelete.map(msgId => {
+                            return remove(child(messagesRef, msgId));
+                        });
+                        await Promise.all(deletePromises);
+                        console.log(`Cleaned up ${messagesToDelete.length} old messages.`);
+                    }
+                }
+            } catch (error) {
+                console.error("Error cleaning up old messages:", error);
+            }
+        }
+
+
+        /**
          * Sends a message to the Firebase Realtime Database.
          * This function now handles text, audio, and image messages.
          */
@@ -589,11 +752,13 @@
                         text: messageText,
                         timestamp: serverTimestamp()
                     });
-                    messageInput.value = ''; // Clear input field
-                    alertMessage("Public transmission initiated...", 'green');
                 } catch (error) {
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
+                } finally {
+                    messageInput.value = ''; // Clear input field
+                    resetInputArea(); // Reset input area after sending and scroll to bottom
+                    cleanupOldMessages(); // Clean up old messages after sending
                 }
             } else if (audioBlob && currentUserId) { // Audio message
                 sendVoiceMessage();
@@ -601,6 +766,7 @@
                 sendImageMessage();
             } else {
                 alertMessage("No content to transmit.", 'red');
+                resetInputArea(); // Scroll to bottom in case of no content
             }
         }
 
@@ -655,6 +821,7 @@
                 sendImageButton.classList.add('hidden'); // Hide send image button
                 imagePreviewStatus.classList.add('hidden'); // Hide image status
 
+                setMyTypingStatus(false); // Ensure typing status is off when recording
                 alertMessage("Audio log initiated...", 'blue');
 
             } /* catches (err) */ catch (err) {
@@ -694,22 +861,22 @@
                             audioMimeType: audioMimeType, // Store mime type
                             timestamp: serverTimestamp()
                         });
-                        alertMessage("Public audio log transmitted. Status: COMPLETE.", 'green');
+                    } catch (error) {
+                        console.error("Error transmitting audio log:", error);
+                        alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
+                    } finally {
                         // Reset voice recording UI
                         audioBlob = null;
                         audioChunks = [];
                         audioMimeType = '';
-                        resetInputArea(); // Reset input area after sending
-                    } catch (error) {
-                        console.error("Error transmitting audio log:", error);
-                        alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
-                        resetInputArea(); // Reset input area on error
+                        resetInputArea(); // Reset input area after sending and scroll to bottom
+                        cleanupOldMessages(); // Clean up old messages after sending
                     }
                 };
                 reader.readAsDataURL(audioBlob);
             } else {
                 alertMessage("No audio log detected for transmission.", 'red');
-                resetInputArea(); // Reset input area if no audio
+                resetInputArea(); // Scroll to bottom if no audio
             }
         }
 
@@ -744,14 +911,16 @@
                     sendVoiceButton.classList.add('hidden');
                     recordingStatus.classList.add('hidden');
                     emojiButton.classList.add('hidden'); // Hide emoji button when image is selected
+                    imageButtonLabel.classList.add('hidden'); // Hide image button label itself
 
+                    setMyTypingStatus(false); // Ensure typing status is off when selecting image
                     alertMessage("Image selected, ready for transmission.", 'blue');
                 };
                 reader.readAsDataURL(file);
             } else {
                 selectedImageBase64 = null;
                 selectedImageMimeType = null;
-                resetInputArea();
+                resetInputArea(); // Scroll to bottom if no image
             }
         }
 
@@ -769,16 +938,16 @@
                         imageMimeType: selectedImageMimeType,
                         timestamp: serverTimestamp()
                     });
-                    alertMessage("Public image transmitted. Status: COMPLETE.", 'green');
-                    resetInputArea(); // Reset input area after sending
                 } catch (error) {
                     console.error("Error transmitting image:", error);
                     alertMessage("Failed to transmit image. It might be too large or an error occurred.", 'red');
-                    resetInputArea(); // Reset input area on error
+                } finally {
+                    resetInputArea(); // Reset input area after sending and scroll to bottom
+                    cleanupOldMessages(); // Clean up old messages after sending
                 }
             } else {
                 alertMessage("No image detected for transmission.", 'red');
-                resetInputArea(); // Reset input area if no image
+                resetInputArea(); // Scroll to bottom if no image
             }
         }
 
@@ -792,7 +961,13 @@
 
             onValue(messagesRef, (snapshot) => {
                 loadingIndicator.style.display = 'none'; // Hide loading indicator once data starts coming
-                messageArea.innerHTML = ''; // Clear previous messages
+                
+                // Clear all messages except the typing indicator (if present)
+                Array.from(messageArea.children).forEach(child => {
+                    if (child.id !== 'typing-indicator' && child.id !== 'loading-indicator') {
+                        child.remove();
+                    }
+                });
 
                 // Track the timestamp of the latest message in this snapshot to prevent re-triggering sound/notification
                 let currentLastMessageTimestamp = 0;
@@ -863,6 +1038,7 @@
 
 
                         messageElement.className = `${alignmentClass} mb-3`;
+                        messageElement.dataset.timestamp = msg.timestamp; // Store timestamp for seen status
                         messageElement.innerHTML = `
                             <div class="max-w-[80%] p-3.5 rounded-md shadow-inner ${bubbleColorClass} break-words font-['Roboto_Mono']">
                                 <div class="text-xs md:text-sm font-bold ${senderColorClass} mb-1 flex items-center">
@@ -871,9 +1047,11 @@
                                 </div>
                                 ${contentHtml}
                                 <div class="text-xs text-right opacity-70 ${textColorClass} mt-2">${timeString}</div>
+                                ${msg.userId === currentUserId && msg.timestamp ? `<div class="my-message-seen-status text-right text-xs text-gray-400 mt-1 hidden" data-message-timestamp="${msg.timestamp}"></div>` : ''}
                             </div>
                         `;
-                        messageArea.appendChild(messageElement);
+                        // Insert new messages before the typing indicator
+                        messageArea.insertBefore(messageElement, typingIndicatorElement);
 
                         // Update currentLastMessageTimestamp
                         currentLastMessageTimestamp = Math.max(currentLastMessageTimestamp, msg.timestamp || 0);
@@ -892,15 +1070,21 @@
                     }
                     // Update global lastProcessedMessageTimestamp
                     lastProcessedMessageTimestamp = currentLastMessageTimestamp;
-
+                    
+                    // Always scroll to bottom after new messages are loaded
+                    messageArea.scrollTop = messageArea.scrollHeight;
+                    
+                    // Update read receipts for all messages after new messages are added
+                    updateAllMessageStatusesInUI();
+                    updateMyLastReadMessageTimestamp(); // Also update my read status after messages load/scroll
                 } else {
                     const noMessagesElement = document.createElement('div');
                     noMessagesElement.className = "text-center text-gray-500 mt-8 text-base font-['Roboto_Mono']";
                     noMessagesElement.textContent = "No data logs found. Start new transmission.";
-                    messageArea.appendChild(noMessagesElement);
+                    messageArea.insertBefore(noMessagesElement, typingIndicatorElement); // Insert before typing indicator
                     lastProcessedMessageTimestamp = 0; // Reset if no messages
+                    messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom even if no messages
                 }
-                messageArea.scrollTop = messageArea.scrollHeight;
             }, (error) => {
                 console.error("Error fetching messages:", error);
                 loadingIndicator.style.display = 'none';
