@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tactical Chat Interface</title>
+    <!-- Favicon for military icon -->
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/e/ea/Tactical_symbol_Land_Forces_-_Motorized_infantry_-_Squad_-_NATO_APP-6A.svg" type="image/svg+xml">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -129,6 +131,83 @@
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
         }
+
+        /* Online Users Modal Styles */
+        .online-users-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .online-users-modal-content {
+            background-color: #1a202c; /* Dark background */
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0, 255, 0, 0.3); /* Green glow */
+            width: 90%;
+            max-width: 400px;
+            max-height: 80%;
+            overflow-y: auto;
+            border: 1px solid #10b981;
+            position: relative; /* For close button positioning */
+        }
+
+        .online-users-modal-content h3 {
+            font-size: 1.5rem;
+            color: #10b981; /* Green */
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .online-users-modal-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .online-users-modal-content ul li {
+            background-color: #2d3748; /* Slightly lighter dark */
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            color: #e2e8f0; /* Light gray */
+            border: 1px solid #4a5568;
+        }
+
+        .online-users-modal-content ul li:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #ef4444; /* Red */
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .modal-close-button:hover {
+            transform: scale(1.1);
+        }
     </style>
     <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oxanium:wght@400;700&display=swap" rel="stylesheet">
@@ -180,6 +259,10 @@
                     >
                         Set Callsign
                     </button>
+                </div>
+                <!-- Online Users Indicator (New) -->
+                <div id="online-users-indicator" class="flex items-center text-xs md:text-sm font-medium text-gray-400 ml-4 cursor-pointer hover:text-green-300 transition-colors duration-200" title="Click to see online users">
+                    <span class="font-bold text-green-400">Online:</span> <span id="online-count" class="font-extrabold text-green-300 ml-1">0</span>
                 </div>
             </div>
         </div>
@@ -277,6 +360,17 @@
         </div>
     </div>
 
+    <!-- Online Users Modal (New) -->
+    <div id="online-users-modal" class="online-users-modal hidden">
+        <div class="online-users-modal-content">
+            <button class="modal-close-button" id="online-users-close-button">&times;</button>
+            <h3>Online Operatives</h3>
+            <ul id="online-users-list">
+                <!-- Online users will be dynamically inserted here -->
+            </ul>
+        </div>
+    </div>
+
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
         <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
@@ -286,7 +380,7 @@
     <script type="module">
         // Import Firebase functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp, get, query, orderByChild, remove, child } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp, get, query, orderByChild, remove, child, update } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
         // Your web app's Firebase configuration (provided by the user)
         const firebaseConfig = {
@@ -338,6 +432,14 @@
         const sendImageButton = document.getElementById('send-image-button');
         const imageButtonLabel = document.getElementById('image-button-label');
         const imagePreviewStatus = document.getElementById('image-preview-status');
+
+        // Online Users Modal elements (New)
+        const onlineUsersIndicator = document.getElementById('online-users-indicator');
+        const onlineCountSpan = document.getElementById('online-count');
+        const onlineUsersModal = document.getElementById('online-users-modal');
+        const onlineUsersList = document.getElementById('online-users-list');
+        const onlineUsersCloseButton = document.getElementById('online-users-close-button');
+
 
         // Voice message variables
         let mediaRecorder;
@@ -494,6 +596,10 @@
             imageInput.addEventListener('change', handleImageSelection);
             sendImageButton.addEventListener('click', sendImageMessage);
 
+            // Online Users Modal Event Listeners
+            onlineUsersIndicator.addEventListener('click', showOnlineUsersModal);
+            onlineUsersCloseButton.addEventListener('click', hideOnlineUsersModal);
+
             // Add scroll listener for read receipts
             messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
         }
@@ -590,16 +696,28 @@
             onValue(ref(db, `artifacts/${appId}/public/data/users_presence`), (snapshot) => {
                 userPresenceMap = {}; // Clear map to rebuild
                 let anyOtherUserTyping = false;
+                let onlineUsersCount = 0; // Initialize online user count
+
+                onlineUsersList.innerHTML = ''; // Clear previous list
+
                 snapshot.forEach((childSnapshot) => {
                     const userData = childSnapshot.val();
                     const userId = childSnapshot.key;
                     if (userData.status === 'online') {
                         userPresenceMap[userId] = userData;
+                        onlineUsersCount++; // Increment count for each online user
+
+                        // Add user to the online users list in the modal
+                        const listItem = document.createElement('li');
+                        listItem.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
+                        onlineUsersList.appendChild(listItem);
+
                         if (userId !== currentUserId && userData.isTyping) {
                             anyOtherUserTyping = true;
                         }
                     }
                 });
+                onlineCountSpan.textContent = onlineUsersCount; // Update the displayed count
                 updateAllMessageStatusesInUI(); // Update status for all displayed messages
 
                 // Update typing indicator visibility
@@ -696,23 +814,23 @@
         }
 
         /**
-         * Helper to explicitly update my presence (e.g., after changing display name)
+         * Shows the online users modal.
          */
-        function updateMyPresence(displayName, status) {
-            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-            set(currentUserPresenceRef, {
-                ...userPresenceMap[currentUserId], // Preserve other data
-                displayName: displayName,
-                status: status,
-                timestamp: serverTimestamp()
-            });
+        function showOnlineUsersModal() {
+            onlineUsersModal.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the online users modal.
+         */
+        function hideOnlineUsersModal() {
+            onlineUsersModal.classList.add('hidden');
         }
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
-            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
-            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
