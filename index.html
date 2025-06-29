@@ -194,42 +194,61 @@
             </div>
         </div>
 
-        <!-- Message Input and Emoji/Voice Controls -->
-        <div class="bg-gray-800 p-4 border-t border-gray-700 flex flex-col relative flex-shrink-0">
+        <!-- Message Input and Emoji/Voice Controls (Reduced Height) -->
+        <div class="bg-gray-800 p-3 border-t border-gray-700 flex flex-col relative flex-shrink-0">
             <!-- Emoji Picker -->
             <div id="emoji-picker" class="emoji-picker hidden">
                 <!-- Emojis will be dynamically added here -->
             </div>
 
-            <!-- Row 1: Voice, Image, and Emoji Controls (Smaller Buttons) -->
-            <div class="flex items-center gap-2 md:gap-3 mb-3">
+            <!-- Row 1: Text Input -->
+            <div class="flex-grow mb-2"> <!-- Reduced mb-3 to mb-2 -->
+                <input
+                    type="text"
+                    id="message-input"
+                    placeholder="Enter message protocol..."
+                    class="w-full p-2 md:p-2.5 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-lg transition duration-200"
+                />
+            </div>
+
+            <!-- Row 2: Send Button and Multimedia Buttons -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <button
+                    id="send-button"
+                    class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2 px-4 md:py-2.5 md:px-5 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 flex-shrink-0"
+                >
+                    Transmit
+                </button>
+
+                <div class="flex-grow"></div> <!-- Spacer to push buttons to the right -->
+
                 <!-- Voice Recording Buttons -->
                 <button
                     id="record-voice-button"
-                    class="text-xl md:text-2xl p-2 rounded-full bg-red-700 hover:bg-red-600 active:bg-red-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 border border-red-800 flex-shrink-0"
+                    class="text-lg md:text-xl p-1.5 rounded-full bg-red-700 hover:bg-red-600 active:bg-red-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 border border-red-800 flex-shrink-0"
                     title="Record Audio Log"
                 >
                     🎤
                 </button>
                 <button
                     id="stop-record-button"
-                    class="text-xs md:text-base p-1.5 md:p-2 rounded-sm bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold hidden transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 border border-red-700 flex-shrink-0"
+                    class="text-xs md:text-sm p-1 md:p-1.5 rounded-sm bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold hidden transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 border border-red-700 flex-shrink-0"
                     title="Terminate Recording"
                 >
                     🛑 Stop
                 </button>
                 <button
                     id="send-voice-button"
-                    class="bg-lime-600 hover:bg-lime-500 active:bg-lime-700 text-white font-bold py-1.5 px-3 md:py-2 px-4 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 border border-lime-700 flex-shrink-0"
+                    class="bg-lime-600 hover:bg-lime-500 active:bg-lime-700 text-white font-bold py-1.5 px-3 md:py-1.5 px-3.5 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 border border-lime-700 flex-shrink-0"
                     title="Transmit Audio Log"
                 >
                     ▶️ Send
                 </button>
-                <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Recording Audio...</span>
+                <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Recording Audio...</span> <!-- Reduced font size -->
 
                 <!-- Image Input and Send Button -->
                 <label for="image-input"
-                    class="text-xl md:text-2xl p-2 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
+                    class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
                     title="Attach Image"
                     id="image-button-label"
                 >
@@ -239,40 +258,20 @@
 
                 <button
                     id="send-image-button"
-                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-1.5 px-3 md:py-2 px-4 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-700 flex-shrink-0"
+                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-1.5 px-3 md:py-1.5 px-3.5 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-700 flex-shrink-0"
                     title="Transmit Image"
                 >
                     🖼️ Send
                 </button>
-                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Image ready...</span>
+                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Image ready...</span> <!-- Reduced font size -->
 
-                <!-- Emoji Button (Smaller) -->
+                <!-- Emoji Button -->
                 <button
                     id="emoji-button"
-                    class="text-xl md:text-2xl p-2 rounded-full bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-yellow-300 transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-600 flex-shrink-0"
+                    class="text-lg md:text-xl p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-yellow-300 transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-600 flex-shrink-0"
                     title="Insert Protocol Icon"
                 >
                     😊
-                </button>
-            </div>
-
-            <!-- Row 2: Text Input -->
-            <div class="flex-grow mb-3">
-                <input
-                    type="text"
-                    id="message-input"
-                    placeholder="Enter message protocol..."
-                    class="w-full p-2.5 md:p-3 md:p-4 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-lg transition duration-200"
-                />
-            </div>
-
-            <!-- Row 3: Send Button -->
-            <div>
-                <button
-                    id="send-button"
-                    class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2.5 px-5 md:py-3 md:py-4 md:px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
-                >
-                    Transmit
                 </button>
             </div>
         </div>
@@ -410,8 +409,8 @@
             setupPresence();
             listenForMessages();
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
-            // No need to call resetInputArea here for scrolling; listenForMessages will handle initial scroll.
-
+            resetInputArea(); // Call reset to set initial UI state and scroll to bottom
+            
             // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => {
@@ -673,7 +672,7 @@
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
+            '🎯', '�', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
