@@ -369,6 +369,46 @@
         const CORRECT_PASSWORD = "rexchat";
 
         /**
+         * Requests notification permission from the user.
+         */
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.log("This browser does not support desktop notification");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                console.log("Notification permission already granted.");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        console.log("Notification permission granted.");
+                    } else {
+                        console.log("Notification permission denied.");
+                    }
+                });
+            }
+        }
+
+        /**
+         * Displays a browser notification for a new message.
+         * @param {string} title - The title of the notification.
+         * @param {string} body - The body text of the notification.
+         */
+        function displayNotification(title, body) {
+            if (Notification.permission === "granted" && !document.hidden) {
+                // If permission is granted and the tab is active, no need for notification
+                return;
+            } else if (Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: 'https://placehold.co/48x48/00FF00/FFFFFF?text=Chat', // Placeholder icon
+                    vibrate: [200, 100, 200]
+                });
+            }
+        }
+
+        /**
          * Resets the input area to its default state (text input visible).
          */
         function resetInputArea() {
@@ -410,6 +450,7 @@
             listenForMessages();
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
             resetInputArea(); // Call reset to set initial UI state and scroll to bottom
+            requestNotificationPermission(); // Request notification permission on app initialization
             
             // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
@@ -672,7 +713,7 @@
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '�', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
@@ -1064,6 +1105,17 @@
                                 if (chatSound) {
                                     chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
                                 }
+                                // Display browser notification for new messages from others
+                                const senderNameForNotification = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}`;
+                                let notificationBody = "";
+                                if (msg.text) {
+                                    notificationBody = msg.text;
+                                } else if (msg.audioData) {
+                                    notificationBody = "Audio Message";
+                                } else if (msg.imageData) {
+                                    notificationBody = "Image Message";
+                                }
+                                displayNotification(`New message from ${senderNameForNotification}`, notificationBody);
                             }
                         });
                     }
