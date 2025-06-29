@@ -306,7 +306,7 @@
         let lastProcessedMessageTimestamp = 0;
 
         const CORRECT_PASSWORD = "rexchat";
-        // Removed PASSWORD_REMEMBER_KEY as we no longer want to remember it
+        // Removed PASSWORD_REMEMBER_KEY
 
         /**
          * Initializes the chat application after successful password authentication.
@@ -357,7 +357,6 @@
          */
         function handleLogin() {
             if (passwordInput.value === CORRECT_PASSWORD) {
-                // Removed localStorage.setItem(PASSWORD_REMEMBER_KEY, 'true');
                 initializeChatApp();
             } else {
                 passwordError.classList.remove('hidden');
@@ -490,7 +489,7 @@
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '�', '🔊', '🔬',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '�',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
@@ -566,21 +565,21 @@
 
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: audioMimeType });
-                    // Show send button and hide stop button
-                    stopRecordButton.classList.add('hidden');
-                    sendVoiceButton.classList.remove('hidden');
-                    recordVoiceButton.classList.remove('record-button-active'); // Remove pulsing animation
-                    recordingStatus.classList.add('hidden');
+                    // Correctly toggle buttons after stopping recording
+                    stopRecordButton.classList.add('hidden'); // Hide stop
+                    sendVoiceButton.classList.remove('hidden'); // Show send
+                    recordVoiceButton.classList.add('hidden'); // Ensure record is still hidden until sent
+                    recordingStatus.classList.add('hidden'); // Hide status
                 };
 
                 mediaRecorder.start();
                 recordVoiceButton.classList.add('record-button-active'); // Add pulsing animation
-                stopRecordButton.classList.add('hidden'); // Ensure stop is initially hidden
-                recordVoiceButton.classList.add('hidden'); // Hide record button while recording
+                recordVoiceButton.classList.add('hidden'); // Hide record button
+                stopRecordButton.classList.remove('hidden'); // Show stop button
                 recordingStatus.classList.remove('hidden');
-                sendVoiceButton.classList.add('hidden'); // Hide send button while recording
+                sendVoiceButton.classList.add('hidden'); // Ensure send button is hidden
                 messageInput.classList.add('hidden'); // Hide text input
-                sendButton.classList.add('hidden'); // Hide text send button (now at bottom)
+                sendButton.classList.add('hidden'); // Hide text send button
                 emojiButton.classList.add('hidden'); // Hide emoji button
                 alertMessage("Audio log initiated...", 'blue');
 
@@ -589,7 +588,7 @@
                 alertMessage("Failed to access microphone. Permission required for audio log.", 'red');
                 // Reset UI in case of error
                 stopRecordButton.classList.add('hidden');
-                recordVoiceButton.classList.remove('hidden');
+                recordVoiceButton.classList.remove('hidden'); // Show record button again
                 recordVoiceButton.classList.remove('record-button-active');
                 recordingStatus.classList.add('hidden');
                 sendVoiceButton.classList.add('hidden');
