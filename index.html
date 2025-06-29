@@ -373,7 +373,7 @@
 
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -411,7 +411,7 @@
         // DOM elements for chat interface
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const messageArea = document.getElementById('message-area');
+        const messageArea = document.getElementById('message-area'); // Fixed: Removed duplicate 'document ='
         const displayUserId = document.getElementById('display-user-id');
         const loadingIndicator = document.getElementById('loading-indicator');
         const emojiButton = document.getElementById('emoji-button');
@@ -494,6 +494,22 @@
         }
 
         /**
+         * Requests microphone permission.
+         */
+        async function requestMicrophonePermission() {
+            try {
+                // Attempt to get a media stream. This will prompt the user if permission is not granted.
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log("Microphone permission granted.");
+                // Immediately stop the tracks to release the microphone as we only needed to check permission.
+                stream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                console.warn("Microphone permission denied or an error occurred:", err);
+                alertMessage("Microphone access denied. Voice messages will not be available.", 'red');
+            }
+        }
+
+        /**
          * Displays a browser notification for a new message.
          * @param {string} title - The title of the notification.
          * @param {string} body - The body text of the notification.
@@ -554,6 +570,7 @@
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
             resetInputArea(); // Call reset to set initial UI state and scroll to bottom
             requestNotificationPermission(); // Request notification permission on app initialization
+            requestMicrophonePermission(); // Explicitly request microphone permission on app initialization
             
             // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
@@ -833,7 +850,7 @@
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '🔑', '🔗', '🔒', '🔓',
+            '�', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
 
@@ -934,6 +951,13 @@
          */
         async function startRecording() {
             try {
+                // Ensure mic permission is granted before starting recording
+                const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                if (permissionStatus.state === 'denied') {
+                    alertMessage("Microphone access denied. Please enable it in your browser settings to record audio.", 'red');
+                    return;
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 // Check for MediaRecorder support. Use 'audio/webm' as preferred.
                 const options = { mimeType: 'audio/webm' };
@@ -985,7 +1009,8 @@
 
             } /* catches (err) */ catch (err) {
                 console.error("Error accessing microphone:", err);
-                alertMessage("Failed to access microphone. Permission required for audio log.", 'red');
+                // The permission check above should catch 'denied' state. This catch handles other errors like device not found.
+                alertMessage("Failed to access microphone. Check if a microphone is connected.", 'red');
                 resetInputArea(); // Reset UI in case of error
             }
         }
@@ -1279,7 +1304,7 @@
 
             const alertDiv = document.createElement('div');
             alertDiv.id = 'app-alert';
-            alertDiv.className = `fixed bottom-4 left-1/2 -translate-x-1/2 ${bgColorClass} text-white px-6 py-3 rounded-lg app-alert z-50 transform scale-0 opacity-0 border border-gray-700`;
+            alertDiv.className = `fixed top-4 left-1/2 -translate-x-1/2 ${bgColorClass} text-white px-6 py-3 rounded-lg app-alert z-50 transform scale-0 opacity-0 border border-gray-700`;
             alertDiv.textContent = message;
             document.body.appendChild(alertDiv);
 
