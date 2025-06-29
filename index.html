@@ -179,12 +179,12 @@
                 <!-- Emojis will be dynamically added here -->
             </div>
 
-            <!-- Top row: Voice, Emoji, then Text Input -->
-            <div class="flex items-end gap-2 md:gap-3 mb-3">
+            <!-- Row 1: Voice and Emoji Controls (Smaller Buttons) -->
+            <div class="flex items-center gap-2 md:gap-3 mb-3">
                 <!-- Voice Recording Buttons -->
                 <button
                     id="record-voice-button"
-                    class="text-2xl md:text-4xl p-2.5 rounded-full bg-red-700 hover:bg-red-600 active:bg-red-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 border border-red-800 flex-shrink-0"
+                    class="text-xl md:text-2xl p-2 rounded-full bg-red-700 hover:bg-red-600 active:bg-red-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 border border-red-800 flex-shrink-0"
                     title="Record Audio Log"
                 >
                     🎤
@@ -205,35 +205,41 @@
                 </button>
                 <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Recording Audio...</span>
 
-                <!-- Emoji and Text Input -->
+                <!-- Emoji Button (Smaller) -->
                 <button
                     id="emoji-button"
-                    class="text-2xl md:text-4xl p-2.5 rounded-full bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-yellow-300 transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-600 flex-shrink-0"
+                    class="text-xl md:text-2xl p-2 rounded-full bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-yellow-300 transition duration-300 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-600 flex-shrink-0"
                     title="Insert Protocol Icon"
                 >
                     😊
                 </button>
+            </div>
 
+            <!-- Row 2: Text Input -->
+            <div class="flex-grow mb-3">
                 <input
                     type="text"
                     id="message-input"
                     placeholder="Enter message protocol..."
-                    class="flex-grow p-2.5 md:p-3 md:p-4 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-lg transition duration-200"
+                    class="w-full p-2.5 md:p-3 md:p-4 rounded-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-lg transition duration-200"
                 />
             </div>
-            <!-- Bottom row: Transmit button (moved from combined row) -->
-            <button
-                id="send-button"
-                class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2.5 px-5 md:py-3 md:py-4 md:px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
-            >
-                Transmit
-            </button>
+
+            <!-- Row 3: Send Button -->
+            <div>
+                <button
+                    id="send-button"
+                    class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2.5 px-5 md:py-3 md:py-4 md:px-6 md:px-8 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
+                >
+                    Transmit
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoIFNvbHV0aW9uc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29weXJpZ2h0IE9zY2FyIFN5bnRoc1AFAAAAZAAAAAQAAAIAAAABAAAD/8xM1ABiAAAAFwAAAASEIAAAAHgAAADwAAAAIUgAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -306,7 +312,6 @@
         let lastProcessedMessageTimestamp = 0;
 
         const CORRECT_PASSWORD = "rexchat";
-        // Removed PASSWORD_REMEMBER_KEY
 
         /**
          * Initializes the chat application after successful password authentication.
@@ -488,8 +493,8 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
-            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '�',
+            '🔋', '⚡', '🧊', '🔥', '�', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
