@@ -119,31 +119,31 @@
     <!-- Main Chat Container: Industrial, dark panel look -->
     <div class="bg-gray-900 rounded-lg shadow-xl overflow-hidden w-full h-screen sm:h-[95vh] sm:max-h-[900px] sm:w-[90vw] sm:max-w-5xl flex flex-col border border-gray-700 transition-all duration-300 ease-in-out">
         <!-- Chat Header -->
-        <div class="bg-gray-800 p-4 flex flex-col md:flex-row justify-between items-center gap-y-3 md:gap-x-4 shadow-inner border-b border-green-500 flex-shrink-0">
-            <h1 class="text-xl md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
+        <div class="bg-gray-800 p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-y-2 md:gap-x-3 shadow-inner border-b border-green-500 flex-shrink-0">
+            <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
             <!-- User Info and Name Setting Controls -->
-            <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-2 md:gap-x-3 w-full md:w-auto">
-                <div id="user-info" class="text-sm md:text-base font-medium text-gray-400 flex items-center">
+            <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-1 md:gap-x-2 w-full md:w-auto">
+                <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center">
                     <span class="font-bold text-green-400">Unit:</span> <span id="display-user-id" class="font-extrabold text-green-300 ml-1">UNKNOWN</span> <span id="my-status-indicator" class="status-dot ml-2"></span>
                 </div>
-                <div class="flex items-center gap-2 w-full max-w-xs md:max-w-none md:w-auto">
+                <div class="flex items-center gap-1.5 w-full max-w-xs md:max-w-none md:w-auto">
                     <input
                         type="text"
                         id="display-name-input"
                         placeholder="Callsign"
-                        class="p-2 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-sm md:text-base flex-grow transition duration-200"
+                        class="p-1.5 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-xs md:text-sm flex-grow transition duration-200"
                         maxlength="15"
                     />
                     <button
                         id="set-display-name-button"
-                        class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-sm md:text-base font-semibold py-2 px-4 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700"
+                        class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-xs md:text-sm font-semibold py-1.5 px-3 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700"
                     >
                         Set Callsign
                     </button>
                 </div>
                 <button
                     id="enable-notifications-button"
-                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm md:text-base font-semibold py-2 px-4 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full md:w-auto mt-2 md:mt-0 border border-blue-700"
+                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs md:text-sm font-semibold py-1.5 px-3 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full md:w-auto mt-1 md:mt-0 border border-blue-700"
                 >
                     Enable Alerts
                 </button>
@@ -436,9 +436,9 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
-            '�', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
+            '🔎', '�', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
         ];
 
         /**
@@ -794,4 +794,3 @@
     </script>
 </body>
 </html>
-�
