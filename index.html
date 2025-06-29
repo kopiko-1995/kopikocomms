@@ -306,19 +306,50 @@
         let lastProcessedMessageTimestamp = 0;
 
         const CORRECT_PASSWORD = "rexchat";
-        const PASSWORD_REMEMBER_KEY = "tacticalChatPasswordRemembered"; // Key to remember successful password entry
+        // Removed PASSWORD_REMEMBER_KEY as we no longer want to remember it
 
         /**
          * Initializes the chat application after successful password authentication.
          */
         function initializeChatApp() {
-            passwordScreen.classList.add('hidden');
-            chatAppContainer.classList.remove('hidden');
+            // Ensure password screen is hidden and chat container is displayed
+            passwordScreen.style.display = 'none';
+            chatAppContainer.style.display = 'flex'; // Assuming chatAppContainer uses flexbox
 
             initializeDisplayName();
             setupPresence();
             listenForMessages();
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
+
+            // Attach all event listeners here, ensuring DOM elements are ready
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            emojiButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                emojiPicker.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!emojiPicker.contains(event.target) && !emojiButton.contains(event.target)) {
+                    emojiPicker.classList.add('hidden');
+                }
+            });
+
+            setDisplayNameButton.addEventListener('click', setDisplayName);
+            displayNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    setDisplayName();
+                }
+            });
+
+            recordVoiceButton.addEventListener('click', startRecording);
+            stopRecordButton.addEventListener('click', stopRecording);
+            sendVoiceButton.addEventListener('click', sendVoiceMessage);
         }
 
         /**
@@ -326,7 +357,7 @@
          */
         function handleLogin() {
             if (passwordInput.value === CORRECT_PASSWORD) {
-                localStorage.setItem(PASSWORD_REMEMBER_KEY, 'true'); // Remember password
+                // Removed localStorage.setItem(PASSWORD_REMEMBER_KEY, 'true');
                 initializeChatApp();
             } else {
                 passwordError.classList.remove('hidden');
@@ -334,19 +365,15 @@
             }
         }
 
-        // Check if password is already remembered on load
-        if (localStorage.getItem(PASSWORD_REMEMBER_KEY) === 'true') {
-            initializeChatApp();
-        } else {
-            // Show password screen and add event listeners for login
-            passwordScreen.classList.remove('hidden');
-            loginButton.addEventListener('click', handleLogin);
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-        }
+        // Always show the password screen and attach event listeners for login
+        passwordScreen.classList.remove('hidden');
+        passwordScreen.style.display = 'flex'; // Ensure password screen is visible
+        loginButton.addEventListener('click', handleLogin);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
 
 
         /**
@@ -380,6 +407,7 @@
                 alertMessage("Callsign cannot be empty.", 'red');
             }
         }
+
 
         /**
          * Sets up the Firebase Realtime Database presence system for the current user.
@@ -459,11 +487,12 @@
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
-            '👍', '✅', '❌', '⚠️', '�', '📍', '🗺️', '📡', '⚙️', '🛡️',
+            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '�', '🔊', '🔬',
+            '🔎', '🔑', '🔗', '🔒', '🔓',
+            '📊', '📈', '📉', '📊', '📝'
         ];
 
         /**
@@ -739,41 +768,6 @@
             });
         }
 
-        // Event Listeners
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Toggle emoji picker visibility
-        emojiButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            emojiPicker.classList.toggle('hidden');
-        });
-
-        // Hide emoji picker if clicking outside
-        document.addEventListener('click', (event) => {
-            if (!emojiPicker.contains(event.target) && !emojiButton.contains(event.target)) {
-                emojiPicker.classList.add('hidden');
-            }
-        });
-
-        // Set Display Name event listeners
-        setDisplayNameButton.addEventListener('click', setDisplayName);
-        displayNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                setDisplayName();
-            }
-        });
-
-        // Voice Message Event Listeners
-        recordVoiceButton.addEventListener('click', startRecording);
-        stopRecordButton.addEventListener('click', stopRecording);
-        sendVoiceButton.addEventListener('click', sendVoiceMessage);
-
-
         /**
          * Displays a custom alert message within the UI.
          * @param {string} message - The message to display.
@@ -811,4 +805,3 @@
     </script>
 </body>
 </html>
-�
