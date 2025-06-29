@@ -141,12 +141,6 @@
                         Set Callsign
                     </button>
                 </div>
-                <button
-                    id="enable-notifications-button"
-                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs md:text-sm font-semibold py-1.5 px-3 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full md:w-auto mt-1 md:mt-0 border border-blue-700"
-                >
-                    Enable Alerts
-                </button>
             </div>
         </div>
 
@@ -254,7 +248,7 @@
         const displayNameInput = document.getElementById('display-name-input');
         const setDisplayNameButton = document.getElementById('set-display-name-button');
         const chatSound = document.getElementById('chat-sound');
-        const enableNotificationsButton = document.getElementById('enable-notifications-button');
+        const enableNotificationsButton = document.getElementById('enable-notifications-button'); // This will now be undefined after removing from HTML
         const myStatusIndicator = document.getElementById('my-status-indicator'); // New: My own status indicator
 
         // Voice message elements
@@ -382,49 +376,50 @@
         }
 
 
-        /**
-         * Requests permission for browser notifications.
-         */
-        function requestNotificationPermission() {
-            if (!("Notification" in window)) {
-                alertMessage("Browser does not support alert protocols.", 'red');
-            } else if (Notification.permission === "granted") {
-                alertMessage("Alert permission already granted. Status: ACTIVE.", 'blue');
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        alertMessage("Alert permission granted! Status: ACTIVE.", 'green');
-                    } else {
-                        alertMessage("Alert permission denied. Status: INACTIVE.", 'red');
-                    }
-                });
-            } else {
-                alertMessage("Alert permission previously denied. Adjust browser settings to enable.", 'red');
-            }
-        }
+        // Notification functions are removed as per request.
+        // /**
+        //  * Requests permission for browser notifications.
+        //  */
+        // function requestNotificationPermission() {
+        //     if (!("Notification" in window)) {
+        //         alertMessage("Browser does not support alert protocols.", 'red');
+        //     } else if (Notification.permission === "granted") {
+        //         alertMessage("Alert permission already granted. Status: ACTIVE.", 'blue');
+        //     } else if (Notification.permission !== "denied") {
+        //         Notification.requestPermission().then(permission => {
+        //             if (permission === "granted") {
+        //                 alertMessage("Alert permission granted! Status: ACTIVE.", 'green');
+        //             } else {
+        //                 alertMessage("Alert permission denied. Status: INACTIVE.", 'red');
+        //             }
+        //         });
+        //     } else {
+        //         alertMessage("Alert permission previously denied. Adjust browser settings to enable.", 'red');
+        //     }
+        // }
 
-        /**
-         * Displays a browser notification for a new message.
-         * @param {object} messageData - The message object.
-         */
-        function showNotification(messageData) {
-            if (Notification.permission === "granted") {
-                const title = `Incoming Transmission from ${messageData.displayName || `Unit-${messageData.userId.substring(0, 4).toUpperCase()}...`}`;
-                const options = {
-                    body: messageData.text || "Voice log incoming.", // Indicate voice message
-                    icon: 'https://placehold.co/48x48/00FF00/000000?text=COM', // Green COM icon
-                    tag: 'chat-message-notification', // To group notifications
-                    renotify: true // Re-show if already displayed
-                };
-                const notification = new Notification(title, options);
+        // /**
+        //  * Displays a browser notification for a new message.
+        //  * @param {object} messageData - The message object.
+        //  */
+        // function showNotification(messageData) {
+        //     if (Notification.permission === "granted") {
+        //         const title = `Incoming Transmission from ${messageData.displayName || `Unit-${messageData.userId.substring(0, 4).toUpperCase()}...`}`;
+        //         const options = {
+        //             body: messageData.text || "Voice log incoming.", // Indicate voice message
+        //             icon: 'https://placehold.co/48x48/00FF00/000000?text=COM', // Green COM icon
+        //             tag: 'chat-message-notification', // To group notifications
+        //             renotify: true // Re-show if already displayed
+        //         };
+        //         const notification = new Notification(title, options);
 
-                // Optional: Focus the tab when notification is clicked
-                notification.onclick = function() {
-                    window.focus();
-                    this.close();
-                };
-            }
-        }
+        //         // Optional: Focus the tab when notification is clicked
+        //         notification.onclick = function() {
+        //             window.focus();
+        //             this.close();
+        //         };
+        //     }
+        // }
 
 
         // Call to initialize display name and setup presence on load
@@ -435,10 +430,10 @@
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
-            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
+            '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '�', '✔️', '✖️',
             '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '�', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
+            '🔎', '🔑', '🔗', '🔒', '🔓', '📊', '📈', '📉', '📊', '📝'
         ];
 
         /**
@@ -695,9 +690,7 @@
                                 if (chatSound) {
                                     chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
                                 }
-                                if (document.hidden) {
-                                    showNotification(msg);
-                                }
+                                // Removed showNotification call
                             }
                         });
                     }
@@ -748,8 +741,8 @@
             }
         });
 
-        // Enable Notifications button event listener
-        enableNotificationsButton.addEventListener('click', requestNotificationPermission);
+        // Removed the event listener for enableNotificationsButton
+        // enableNotificationsButton.addEventListener('click', requestNotificationPermission);
 
         // Voice Message Event Listeners
         recordVoiceButton.addEventListener('click', startRecording);
