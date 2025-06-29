@@ -179,7 +179,7 @@
                 <!-- Emojis will be dynamically added here -->
             </div>
 
-            <!-- Row 1: Voice and Emoji Controls (Smaller Buttons) -->
+            <!-- Row 1: Voice, Image, and Emoji Controls (Smaller Buttons) -->
             <div class="flex items-center gap-2 md:gap-3 mb-3">
                 <!-- Voice Recording Buttons -->
                 <button
@@ -204,6 +204,25 @@
                     ▶️ Send
                 </button>
                 <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Recording Audio...</span>
+
+                <!-- Image Input and Send Button -->
+                <label for="image-input"
+                    class="text-xl md:text-2xl p-2 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
+                    title="Attach Image"
+                    id="image-button-label"
+                >
+                    📸
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                </label>
+
+                <button
+                    id="send-image-button"
+                    class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-1.5 px-3 md:py-2 px-4 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-700 flex-shrink-0"
+                    title="Transmit Image"
+                >
+                    🖼️ Send
+                </button>
+                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-sm">Image ready...</span>
 
                 <!-- Emoji Button (Smaller) -->
                 <button
@@ -292,11 +311,22 @@
         const sendVoiceButton = document.getElementById('send-voice-button');
         const recordingStatus = document.getElementById('recording-status');
 
+        // New image message elements
+        const imageInput = document.getElementById('image-input');
+        const sendImageButton = document.getElementById('send-image-button');
+        const imageButtonLabel = document.getElementById('image-button-label');
+        const imagePreviewStatus = document.getElementById('image-preview-status');
+
         // Voice message variables
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob = null;
         let audioMimeType = '';
+
+        // Image message variables
+        let selectedImageBase64 = null;
+        let selectedImageMimeType = null;
+
 
         // Persistent User ID and Display Name
         let currentUserId = localStorage.getItem('tacticalChatUserId');
@@ -314,6 +344,28 @@
         const CORRECT_PASSWORD = "rexchat";
 
         /**
+         * Resets the input area to its default state (text input visible).
+         */
+        function resetInputArea() {
+            messageInput.classList.remove('hidden');
+            sendButton.classList.remove('hidden');
+            emojiButton.classList.remove('hidden'); // Show emoji button
+            recordVoiceButton.classList.remove('hidden'); // Show record button
+
+            // Hide voice specific controls
+            stopRecordButton.classList.add('hidden');
+            sendVoiceButton.classList.add('hidden');
+            recordingStatus.classList.add('hidden');
+            
+            // Hide image specific controls
+            sendImageButton.classList.add('hidden');
+            imagePreviewStatus.classList.add('hidden');
+            imageInput.value = ''; // Clear file input
+            selectedImageBase64 = null;
+            selectedImageMimeType = null;
+        }
+
+        /**
          * Initializes the chat application after successful password authentication.
          */
         function initializeChatApp() {
@@ -325,6 +377,7 @@
             setupPresence();
             listenForMessages();
             populateEmojiPicker(); // Make sure emoji picker is populated on app start
+            resetInputArea(); // Initialize input area state
 
             // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
@@ -355,6 +408,9 @@
             recordVoiceButton.addEventListener('click', startRecording);
             stopRecordButton.addEventListener('click', stopRecording);
             sendVoiceButton.addEventListener('click', sendVoiceMessage);
+
+            imageInput.addEventListener('change', handleImageSelection);
+            sendImageButton.addEventListener('click', sendImageMessage);
         }
 
         /**
@@ -493,9 +549,9 @@
         const protocol_icons = [
             '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '⬆️', '⬇️', '📈', '📉', '✔️', '✖️',
-            '🔋', '⚡', '🧊', '🔥', '�', '💨', '☀️', '☁️', '🌧️', '❄️',
+            '🔋', '⚡', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
-            '🔎', '🔑', '🔗', '🔒', '🔓',
+            '�', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
 
@@ -519,13 +575,13 @@
 
         /**
          * Sends a message to the Firebase Realtime Database.
+         * This function now handles text, audio, and image messages.
          */
         async function sendMessage() {
             const messageText = messageInput.value.trim();
 
-            if (messageText && currentUserId) {
+            if (messageText && currentUserId) { // Text message
                 try {
-                    // Path for public chat data
                     const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
                     await push(messagesRef, {
                         userId: currentUserId,
@@ -534,10 +590,17 @@
                         timestamp: serverTimestamp()
                     });
                     messageInput.value = ''; // Clear input field
+                    alertMessage("Public transmission initiated...", 'green');
                 } catch (error) {
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
                 }
+            } else if (audioBlob && currentUserId) { // Audio message
+                sendVoiceMessage();
+            } else if (selectedImageBase64 && currentUserId) { // Image message
+                sendImageMessage();
+            } else {
+                alertMessage("No content to transmit.", 'red');
             }
         }
 
@@ -579,27 +642,25 @@
 
                 mediaRecorder.start();
                 recordVoiceButton.classList.add('record-button-active'); // Add pulsing animation
-                recordVoiceButton.classList.add('hidden'); // Hide record button
+                
+                // Hide other input methods
+                recordVoiceButton.classList.add('hidden'); // Hide record button itself
                 stopRecordButton.classList.remove('hidden'); // Show stop button
-                recordingStatus.classList.remove('hidden');
-                sendVoiceButton.classList.add('hidden'); // Ensure send button is hidden
+                recordingStatus.classList.remove('hidden'); // Show recording status
+                sendVoiceButton.classList.add('hidden'); // Hide send voice button
                 messageInput.classList.add('hidden'); // Hide text input
                 sendButton.classList.add('hidden'); // Hide text send button
                 emojiButton.classList.add('hidden'); // Hide emoji button
+                imageButtonLabel.classList.add('hidden'); // Hide image button
+                sendImageButton.classList.add('hidden'); // Hide send image button
+                imagePreviewStatus.classList.add('hidden'); // Hide image status
+
                 alertMessage("Audio log initiated...", 'blue');
 
             } /* catches (err) */ catch (err) {
                 console.error("Error accessing microphone:", err);
                 alertMessage("Failed to access microphone. Permission required for audio log.", 'red');
-                // Reset UI in case of error
-                stopRecordButton.classList.add('hidden');
-                recordVoiceButton.classList.remove('hidden'); // Show record button again
-                recordVoiceButton.classList.remove('record-button-active');
-                recordingStatus.classList.add('hidden');
-                sendVoiceButton.classList.add('hidden');
-                messageInput.classList.remove('hidden');
-                sendButton.classList.remove('hidden');
-                emojiButton.classList.remove('hidden');
+                resetInputArea(); // Reset UI in case of error
             }
         }
 
@@ -638,19 +699,86 @@
                         audioBlob = null;
                         audioChunks = [];
                         audioMimeType = '';
-                        sendVoiceButton.classList.add('hidden');
-                        recordVoiceButton.classList.remove('hidden'); // Show record button again
-                        messageInput.classList.remove('hidden'); // Show text input
-                        sendButton.classList.remove('hidden'); // Show text send button
-                        emojiButton.classList.remove('hidden'); // Show emoji button
+                        resetInputArea(); // Reset input area after sending
                     } catch (error) {
                         console.error("Error transmitting audio log:", error);
                         alertMessage("Failed to transmit audio log. It might be too large or an error occurred.", 'red');
+                        resetInputArea(); // Reset input area on error
                     }
                 };
                 reader.readAsDataURL(audioBlob);
             } else {
                 alertMessage("No audio log detected for transmission.", 'red');
+                resetInputArea(); // Reset input area if no audio
+            }
+        }
+
+        /**
+         * Handles image file selection.
+         */
+        function handleImageSelection(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alertMessage("Please select an image file.", 'red');
+                    imageInput.value = ''; // Clear file input
+                    selectedImageBase64 = null;
+                    selectedImageMimeType = null;
+                    resetInputArea();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    selectedImageBase64 = reader.result;
+                    selectedImageMimeType = file.type;
+
+                    // Show image send button and hide other input methods
+                    sendImageButton.classList.remove('hidden');
+                    imagePreviewStatus.classList.remove('hidden'); // Show status like "Image ready..."
+                    
+                    messageInput.classList.add('hidden');
+                    sendButton.classList.add('hidden');
+                    recordVoiceButton.classList.add('hidden');
+                    stopRecordButton.classList.add('hidden');
+                    sendVoiceButton.classList.add('hidden');
+                    recordingStatus.classList.add('hidden');
+                    emojiButton.classList.add('hidden'); // Hide emoji button when image is selected
+
+                    alertMessage("Image selected, ready for transmission.", 'blue');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                selectedImageBase64 = null;
+                selectedImageMimeType = null;
+                resetInputArea();
+            }
+        }
+
+        /**
+         * Sends an image message to the Firebase Realtime Database.
+         */
+        async function sendImageMessage() {
+            if (selectedImageBase64 && currentUserId) {
+                try {
+                    const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+                    await push(messagesRef, {
+                        userId: currentUserId,
+                        displayName: currentDisplayName,
+                        imageData: selectedImageBase64,
+                        imageMimeType: selectedImageMimeType,
+                        timestamp: serverTimestamp()
+                    });
+                    alertMessage("Public image transmitted. Status: COMPLETE.", 'green');
+                    resetInputArea(); // Reset input area after sending
+                } catch (error) {
+                    console.error("Error transmitting image:", error);
+                    alertMessage("Failed to transmit image. It might be too large or an error occurred.", 'red');
+                    resetInputArea(); // Reset input area on error
+                }
+            } else {
+                alertMessage("No image detected for transmission.", 'red');
+                resetInputArea(); // Reset input area if no image
             }
         }
 
@@ -714,7 +842,15 @@
                             // If it's a voice message, show "Voice Message" or sender's name and "Voice"
                             let voiceMessageLabel = msg.userId === currentUserId ? "AUDIO LOG (OUTGOING)" : "AUDIO LOG (INCOMING)";
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${voiceMessageLabel}</div>` + contentHtml;
-                        } else {
+                        } else if (msg.imageData) {
+                            // Display image message
+                            contentHtml = `
+                                <img src="${msg.imageData}" alt="User Image" class="max-w-full h-auto rounded-md mt-2 border border-gray-600 object-contain" style="max-height: 200px;">
+                            `;
+                            let imageMessageLabel = msg.userId === currentUserId ? "IMAGE LOG (OUTGOING)" : "IMAGE LOG (INCOMING)";
+                            contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${imageMessageLabel}</div>` + contentHtml;
+                        }
+                        else {
                             // Display text message
                             let messageText = msg.text;
                             contentHtml = `<div class="text-sm md:text-base ${textColorClass} tracking-tight">${messageText}</div>`;
