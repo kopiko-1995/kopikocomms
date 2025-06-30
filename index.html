@@ -41,8 +41,10 @@
             overflow-y: auto;
             position: absolute;
             bottom: calc(100% + 10px);
-            left: 0;
-            right: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 350px; /* Adjust as needed */
+            width: 90%; /* Responsive width */
             z-index: 50;
             border: 1px solid #10b981; /* Accent green border */
         }
@@ -92,7 +94,6 @@
             height: 8px;
             border-radius: 50%;
             margin-left: 6px;
-            vertical-align: middle;
             background-color: #ccc; /* Default grey for unknown/offline */
         }
         .status-dot.online {
@@ -104,7 +105,6 @@
         .status-text {
             font-size: 0.75rem; /* text-xs */
             margin-left: 4px;
-            vertical-align: middle;
             opacity: 0.7;
         }
         .status-text.online {
@@ -180,8 +180,8 @@
             border-radius: 5px;
             margin-bottom: 8px;
             display: flex;
+            align-items: center; /* Align items for profile pic */
             justify-content: space-between;
-            align-items: center;
             font-size: 1rem;
             color: #e2e8f0; /* Light gray */
             border: 1px solid #4a5568;
@@ -253,6 +253,86 @@
             max-width: 400px;
             border: 1px solid #10b981;
             position: relative;
+        }
+
+        /* Profile Picture specific styles */
+        .profile-pic-thumbnail {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid rgba(16, 185, 129, 0.5); /* Green border */
+            margin-right: 8px; /* Space from callsign */
+            flex-shrink: 0; /* Prevent shrinking */
+            
+            display: flex; /* Make it a flex container */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            font-size: 16px; /* Adjust font size to fit */
+            line-height: 1; /* Ensure no extra line height for emoji */
+        }
+        .profile-pic-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid #10b981;
+            margin-bottom: 15px;
+            display: flex; /* Use flex to center the emoji */
+            justify-content: center;
+            align-items: center;
+            font-size: 60px; /* Make emoji large */
+            line-height: 1; /* Ensure no extra line height for emoji */
+        }
+
+        /* Loading indicator for file uploads */
+        .upload-loading-indicator {
+            display: none;
+            margin-top: 10px;
+            color: #10b981;
+            font-size: 0.8rem;
+        }
+
+        /* Avatar emoji picker (for the new, separate modal) */
+        .avatar-emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); /* More emojis per row */
+            gap: 6px; /* Slightly reduced gap */
+            padding: 8px; /* Reduced padding */
+            background-color: #2d3748;
+            border-radius: 8px;
+            border: 1px solid #4a5568;
+            max-height: 180px; /* Reduced max-height */
+            overflow-y: auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            max-width: 280px; /* Constrain max-width for smaller size */
+        }
+        .avatar-emoji-picker button {
+            font-size: 24px; /* Slightly reduced font size */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px; /* Reduced padding */
+            border-radius: 6px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .avatar-emoji-picker button:hover {
+            background-color: rgba(16, 185, 129, 0.15);
+            transform: scale(1.1);
+        }
+        .avatar-emoji-picker button.selected {
+            background-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* New styles for the avatar selection modal specific content */
+        .avatar-selection-modal .modal-content {
+            max-width: 320px; /* Smaller max width for this modal */
+            padding: 15px; /* Reduced padding */
+        }
+        .avatar-selection-modal .modal-content h3 {
+            font-size: 1.2rem; /* Smaller title */
+            margin-bottom: 10px;
         }
     </style>
     <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
@@ -335,12 +415,12 @@
         <!-- Chat Header -->
         <div class="bg-gray-800 p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-y-2 md:gap-x-3 shadow-inner border-b border-green-500 flex-shrink-0">
             <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
-            <!-- User Info (Callsign input removed from here) -->
+            <!-- User Info and Online Users sections -->
             <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-1 md:gap-x-2 w-full md:w-auto">
-                <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center">
+                <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center cursor-pointer" title="Manage Profile">
+                    <span id="my-profile-pic-thumb" class="profile-pic-thumbnail flex items-center justify-center"></span>
                     <span class="font-bold text-green-400">Unit:</span> <span id="display-user-id" class="font-extrabold text-green-300 ml-1">UNKNOWN</span> <span id="my-status-indicator" class="status-dot ml-2"></span>
                 </div>
-                <!-- Callsign input and set button removed from here -->
                 <div id="online-users-indicator" class="flex items-center text-xs md:text-sm font-medium text-gray-400 ml-4 cursor-pointer hover:text-green-300 transition-colors duration-200" title="Click to see online users">
                     <span class="font-bold text-green-400">Online:</span> <span id="online-count" class="font-extrabold text-green-300 ml-1">0</span>
                     <span id="pm-notification-badge" class="pm-notification-dot hidden"></span>
@@ -415,7 +495,7 @@
 
                 <!-- Image Input and Send Button -->
                 <label for="image-input"
-                    class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor:pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
+                    class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
                     title="Attach Image"
                     id="image-button-label"
                 >
@@ -454,9 +534,56 @@
         </div>
     </div>
 
+    <!-- Profile Management Modal -->
+    <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content text-center flex flex-col items-center gap-4">
+            <button class="modal-close-button" id="profile-modal-close-button">&times;</button>
+            <h3 class="text-xl md:text-2xl font-bold text-green-400 tracking-wider uppercase font-['Oxanium']">Operative Profile</h3>
+            
+            <div id="profile-pic-preview" class="profile-pic-large cursor-pointer" title="Change Avatar"></div>
+            
+            <label for="profile-callsign-input" class="text-gray-400 text-sm">Callsign:</label>
+            <input
+                type="text"
+                id="profile-callsign-input"
+                placeholder="Your Callsign"
+                class="p-2 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-base transition duration-200 w-full"
+                maxlength="15"
+            />
+             <label for="profile-custom-status-input" class="text-gray-400 text-sm">Custom Status:</label>
+            <input
+                type="text"
+                id="profile-custom-status-input"
+                placeholder="e.g., 'On Patrol', 'Offline for Debrief'"
+                class="p-2 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-base transition duration-200 w-full"
+                maxlength="50"
+            />
+            
+            <button
+                id="save-profile-button"
+                class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-2 px-5 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
+            >
+                Save Profile
+            </button>
+            <p id="profile-error-message" class="text-red-500 text-sm hidden"></p>
+        </div>
+    </div>
+
+    <!-- NEW: Avatar Selection Modal -->
+    <div id="avatar-selection-modal" class="modal-overlay hidden">
+        <div class="modal-content text-center avatar-selection-modal">
+            <button class="modal-close-button" id="avatar-selection-close-button">&times;</button>
+            <h3 class="text-green-400 tracking-wider uppercase font-['Oxanium'] mb-4">Select Avatar Icon</h3>
+            <div id="avatar-emoji-picker" class="avatar-emoji-picker">
+                <!-- Emojis will be populated here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPryaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -464,8 +591,9 @@
         // Import Firebase functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
         import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp, get, query, orderByChild, remove, child, update } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
-        // Import Firebase Auth functions
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        // New: Import Firebase Storage functions (though not directly used for avatar emojis, keeping for other potential future uses)
+        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-storage.js";
 
 
         // Your web app's Firebase configuration (provided by the user)
@@ -484,6 +612,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
+        const storage = getStorage(app); // Keeping for other potential future uses if needed
 
 
         // Access global variables for app ID
@@ -502,7 +631,7 @@
         const authModalTitle = document.getElementById('auth-modal-title');
         const authEmailInput = document.getElementById('auth-email-input');
         const authPasswordInput = document.getElementById('auth-password-input');
-        const authCallsignInput = document.getElementById('auth-callsign-input'); // NEW: Callsign input
+        const authCallsignInput = document.getElementById('auth-callsign-input');
         const authSubmitButton = document.getElementById('auth-submit-button');
         const authErrorMessage = document.getElementById('auth-error-message');
         const toggleAuthModeText = document.getElementById('toggle-auth-mode-text');
@@ -515,9 +644,11 @@
         const displayUserId = document.getElementById('display-user-id');
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
-        // Removed displayNameInput and setDisplayNameButton from chat UI
         const chatSound = document.getElementById('chat-sound');
         const myStatusIndicator = document.getElementById('my-status-indicator');
+        // Profile elements in header
+        const userInfoHeader = document.getElementById('user-info'); 
+        const myProfilePicThumb = document.getElementById('my-profile-pic-thumb'); // Now a span for emoji
 
         // Voice message elements
         const recordVoiceButton = document.getElementById('record-voice-button');
@@ -544,6 +675,20 @@
         const currentChatTitle = document.getElementById('current-chat-title');
         const leavePrivateChatButton = document.getElementById('leave-private-chat-button');
 
+        // Profile Modal elements
+        const profileModal = document.getElementById('profile-modal');
+        const profileModalCloseButton = document.getElementById('profile-modal-close-button');
+        const profilePicPreview = document.getElementById('profile-pic-preview'); // Now a div for emoji
+        const profileCallsignInput = document.getElementById('profile-callsign-input');
+        const profileCustomStatusInput = document.getElementById('profile-custom-status-input');
+        const saveProfileButton = document.getElementById('save-profile-button');
+        const profileErrorMessage = document.getElementById('profile-error-message');
+
+        // NEW Avatar Selection Modal elements
+        const avatarSelectionModal = document.getElementById('avatar-selection-modal');
+        const avatarSelectionCloseButton = document.getElementById('avatar-selection-close-button');
+        const avatarEmojiPicker = document.getElementById('avatar-emoji-picker');
+
 
         // Voice message variables
         let mediaRecorder;
@@ -561,12 +706,26 @@
 
         // Private chat variables
         let currentPrivateChatUserId = null; // Stores the userId of the user in a private chat
-        let currentPrivateChatDisplayName = null; // Stores the displayName of the user in a private chat
+        let currentPrivateChatDisplayName = null; // Stores the displayName of the chat partner
 
 
         // Persistent User ID and Display Name
         let currentUserId = null;
+        // The old placeholder image URL that might be present in old data
+        const OLD_PLACEHOLDER_URL = "https://placehold.co/24x24/1a202c/e2e8f0?text=P";
+        
+        // Initial profile pic is now a default emoji, not a placeholder image
         let currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-UNKNOWN`;
+        let currentProfilePicUrl = localStorage.getItem('chatProfilePicUrl');
+        // If the stored profile pic is the old placeholder, reset it to a default emoji
+        if (currentProfilePicUrl === null || currentProfilePicUrl === OLD_PLACEHOLDER_URL || currentProfilePicUrl === '') {
+            currentProfilePicUrl = '😀'; 
+            localStorage.setItem('chatProfilePicUrl', currentProfilePicUrl); // Update local storage
+        }
+        let currentCustomStatus = localStorage.getItem('chatCustomStatus') || '';
+
+        // NEW: Temporary variable for avatar selection before saving
+        let tempProfilePicSelection = currentProfilePicUrl;
 
 
         // Global map to store online status and typing status of all users
@@ -576,6 +735,20 @@
 
         const CORRECT_PASSWORD = "rexchat";
         let authMode = 'signup'; // 'signup' or 'login'
+
+        // NEW: Array of avatar emojis
+        const avatarEmojis = [
+            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '😈',
+            '😉', '😊', '😋', '😌', '😎', '🤓', '🧐', '😏', '😮', '🤔', // Fixed typo '?' to '🤔'
+            '🤨', '�', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
+            '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😵', '🤯',
+            '🤠', '🥳', '😎', '🥸', '🥺', '😤', '😡', '😠', '🤬', '😳',
+            '😱', '😨', '😰', '😥', '😢', '😭', '🤯', '😬', '😩', '🥺',
+            '👩‍🚀', '🧑‍💻', '🥷', '🕵️', '💂', '👷', '👨‍🔬', '👩‍🔬', '🤖', '👾',
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+            '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🦉', '🦆'
+        ];
+
 
         /**
          * Requests notification permission from the user.
@@ -664,13 +837,13 @@
 
             chatAppContainer.style.display = 'flex';
 
-            // Callsign display now only shows the currentDisplayName
             displayUserId.textContent = currentDisplayName;
-            // displayNameInput is removed, so no need to set its value here
+            myProfilePicThumb.textContent = currentProfilePicUrl; // Set emoji as text content
 
             setupPresence();
             listenForMessages();
             populateEmojiPicker();
+            populateAvatarEmojiPicker(); // NEW: Call to populate avatar emojis
             resetInputArea();
             requestNotificationPermission();
             requestMicrophonePermission();
@@ -701,9 +874,6 @@
                 }
             });
 
-            // setDisplayNameButton and displayNameInput event listeners are now removed
-            // setDisplayName is still a utility function, but not user-triggered from main chat UI
-
             recordVoiceButton.addEventListener('click', startRecording);
             stopRecordButton.addEventListener('click', stopRecording);
             sendVoiceButton.addEventListener('click', sendVoiceMessage);
@@ -717,6 +887,15 @@
             leavePrivateChatButton.addEventListener('click', leavePrivateChat);
 
             messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
+
+            // Profile Modal Event Listeners
+            userInfoHeader.addEventListener('click', openProfileModal);
+            profileModalCloseButton.addEventListener('click', closeProfileModal);
+            profilePicPreview.addEventListener('click', openAvatarSelectionModal); // NEW: Open avatar picker
+            saveProfileButton.addEventListener('click', saveProfileSettings);
+
+            // NEW: Avatar Selection Modal Event Listeners
+            avatarSelectionCloseButton.addEventListener('click', closeAvatarSelectionModal);
         }
 
         /**
@@ -743,6 +922,7 @@
             authErrorMessage.classList.add('hidden');
             authEmailInput.value = '';
             authPasswordInput.value = '';
+            authCallsignInput.value = ''; // Clear callsign input too
 
             if (mode === 'signup') {
                 authModalTitle.textContent = 'Create Call-Sign';
@@ -791,9 +971,25 @@
             }
 
             try {
+                // Check if new callsign is already in use by another user
+                const callsignQuery = ref(db, `artifacts/${appId}/public/data/users_presence`);
+                const snapshot = await get(callsignQuery);
+                let callsignTaken = false;
+                snapshot.forEach(childSnapshot => {
+                    if (childSnapshot.val().displayName === callsign) {
+                        callsignTaken = true;
+                    }
+                });
+                if (callsignTaken) {
+                    authErrorMessage.textContent = `Callsign "${callsign}" is already in use. Please choose a different one.`;
+                    authErrorMessage.classList.remove('hidden');
+                    return;
+                }
+
                 let userCredential;
                 const currentUser = auth.currentUser;
 
+                // Handle linking anonymous account if user exists and is anonymous
                 if (currentUser && currentUser.isAnonymous) {
                     const credential = EmailAuthProvider.credential(email, password);
                     userCredential = await linkWithCredential(currentUser, credential);
@@ -805,9 +1001,11 @@
                 const user = userCredential.user;
                 const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${user.uid}`);
                 
-                // Store the provided callsign with the user's presence data
+                // Store the provided callsign, default emoji, and empty custom status
                 await set(currentUserPresenceRef, {
                     displayName: callsign,
+                    profilePicUrl: currentProfilePicUrl, // Set to the default emoji '😀'
+                    customStatus: '', // Initialize with empty string
                     status: 'online',
                     isTyping: false,
                     typingInChatId: null,
@@ -817,10 +1015,14 @@
                     currentActivePrivateChatWith: null
                 });
                 localStorage.setItem('chatDisplayName', callsign); // Also save to local storage
+                localStorage.setItem('chatProfilePicUrl', currentProfilePicUrl); // Save default emoji
+                localStorage.setItem('chatCustomStatus', ''); // Initialize local storage
+                alertMessage(`Account created for ${callsign}!`, 'green');
 
             } catch (error) {
                 console.error("Email Signup failed:", error);
                 let errorMessage = "Registration failed. Please try again.";
+                // Firebase specific error codes
                 if (error.code === 'auth/email-already-in-use') {
                     errorMessage = "This email is already registered. Please log in instead.";
                 } else if (error.code === 'auth/invalid-email') {
@@ -874,26 +1076,58 @@
                 try {
                     const snapshot = await get(currentUserPresenceRef);
                     const userData = snapshot.val();
-                    if (userData && userData.displayName) {
-                        currentDisplayName = userData.displayName;
-                        localStorage.setItem('chatDisplayName', currentDisplayName);
-                        console.log("Loaded Callsign from Firebase:", currentDisplayName);
-                    } else {
-                        // This case handles users who existed before Callsign in Firebase was mandatory,
-                        // or if there's an issue loading it. A default Callsign is set and saved to Firebase.
-                        currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
-                        localStorage.setItem('chatDisplayName', currentDisplayName);
-                        console.log("Using local/generated Callsign:", currentDisplayName);
+                    if (userData) {
+                        currentDisplayName = userData.displayName || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
+                        // Use default emoji if profilePicUrl is empty string or old placeholder URL
+                        currentProfilePicUrl = (userData.profilePicUrl === '' || userData.profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : userData.profilePicUrl || '😀'; 
+                        currentCustomStatus = userData.customStatus || '';
 
-                        // Ensure this Callsign is pushed to Firebase if it wasn't there
-                        await update(currentUserPresenceRef, { displayName: currentDisplayName });
+                        localStorage.setItem('chatDisplayName', currentDisplayName);
+                        localStorage.setItem('chatProfilePicUrl', currentProfilePicUrl);
+                        localStorage.setItem('chatCustomStatus', currentCustomStatus);
+                        console.log("Loaded Callsign, Profile Pic, and Custom Status from Firebase:", currentDisplayName, currentProfilePicUrl, currentCustomStatus);
+                    } else {
+                        // If user data doesn't exist in RTDB (e.g., new login or old anonymous user)
+                        currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
+                        currentProfilePicUrl = localStorage.getItem('chatProfilePicUrl');
+                        if (currentProfilePicUrl === null || currentProfilePicUrl === OLD_PLACEHOLDER_URL || currentProfilePicUrl === '') {
+                             currentProfilePicUrl = '😀'; // Default emoji
+                        }
+                        currentCustomStatus = localStorage.getItem('chatCustomStatus') || '';
+
+                        localStorage.setItem('chatDisplayName', currentDisplayName);
+                        localStorage.setItem('chatProfilePicUrl', currentProfilePicUrl);
+                        localStorage.setItem('chatCustomStatus', currentCustomStatus);
+
+                        // Ensure presence data is set in Firebase
+                        await set(currentUserPresenceRef, {
+                            displayName: currentDisplayName,
+                            profilePicUrl: currentProfilePicUrl,
+                            customStatus: currentCustomStatus,
+                            status: 'online',
+                            isTyping: false,
+                            typingInChatId: null,
+                            lastReadMessageTimestamp: serverTimestamp(),
+                            hasUnreadPrivateMessages: false,
+                            unreadFrom: {},
+                            currentActivePrivateChatWith: null
+                        });
+                        console.log("Initialized/Updated Callsign, Profile Pic, and Custom Status in Firebase:", currentDisplayName, currentProfilePicUrl, currentCustomStatus);
                     }
+                    // Initialize tempProfilePicSelection with the current actual profile picture
+                    tempProfilePicSelection = currentProfilePicUrl; 
+
                 } catch (error) {
                     console.error("Error fetching user presence data during auth state change:", error);
                     // Fallback to local storage or generate if Firebase fetch fails
                     currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
-                    localStorage.setItem('chatDisplayName', currentDisplayName);
-                    alertMessage("Failed to retrieve Callsign from database. Using local/default.", 'orange');
+                    currentProfilePicUrl = localStorage.getItem('chatProfilePicUrl');
+                    if (currentProfilePicUrl === null || currentProfilePicUrl === OLD_PLACEHOLDER_URL || currentProfilePicUrl === '') {
+                        currentProfilePicUrl = '😀'; // Default emoji
+                    }
+                    currentCustomStatus = localStorage.getItem('chatCustomStatus') || '';
+                    alertMessage("Failed to retrieve profile data. Using local/default.", 'orange');
+                    tempProfilePicSelection = currentProfilePicUrl; // Also fallback for temp
                 }
                 
                 initializeChatApp();
@@ -904,7 +1138,7 @@
                 signupLoginModal.classList.add('hidden'); // Hide auth modal if user logs out
 
                 currentUserId = null;
-                // currentDisplayName is intentionally kept for local consistency until next login/signup
+                // currentDisplayName, currentProfilePicUrl, currentCustomStatus are intentionally kept for local consistency until next login/signup
             }
         });
 
@@ -947,7 +1181,6 @@
                 }
             }
         });
-        // NEW: Event listener for Callsign input
         authCallsignInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && authMode === 'signup') {
                 handleEmailSignup(); // Try to sign up
@@ -959,43 +1192,6 @@
             toggleAuthMode();
         });
 
-
-        /**
-         * Sets the user's display name and saves it to local storage and Firebase.
-         * This function is now primarily called internally during auth state changes
-         * and for initial setup, not directly by a user-facing button in the chat.
-         */
-        function setDisplayName() {
-            // This function is kept for internal logic and Firebase updates,
-            // but the UI elements that directly trigger it are removed.
-            // When `currentDisplayName` changes (e.g., loaded from Firebase),
-            // `displayUserId.textContent` is updated in `initializeChatApp`.
-            
-            // The main logic for saving display name to Firebase is now integrated
-            // into `handleEmailSignup` and `onAuthStateChanged` for initial setup/loading.
-
-            // This part might be reached if `currentDisplayName` is initially 'Unit-UNKNOWN'
-            // or derived from a partial UID, and `setupPresence` is called.
-            if (currentUserId && currentDisplayName && !currentDisplayName.startsWith('Unit-UNKNOWN')) {
-                const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-                get(currentUserPresenceRef).then(snapshot => {
-                    const existingData = snapshot.val() || {};
-                    if (existingData.displayName !== currentDisplayName) { // Only update if different
-                        set(currentUserPresenceRef, {
-                            ...existingData,
-                            displayName: currentDisplayName,
-                            timestamp: serverTimestamp()
-                        }).then(() => {
-                            console.log(`Callsign updated in Firebase: "${currentDisplayName}"`);
-                        }).catch(error => {
-                            console.error("Error updating display name in Firebase:", error);
-                        });
-                    }
-                }).catch(error => {
-                    console.error("Error fetching presence data for display name update in setDisplayName:", error);
-                });
-            }
-        }
 
         /**
          * Sets up the Firebase Realtime Database presence system for the current user.
@@ -1013,8 +1209,13 @@
                 if (snapshot.val() === true) {
                     get(currentUserPresenceRef).then(dataSnapshot => {
                         const existingData = dataSnapshot.val() || {};
+                        // Ensure currentProfilePicUrl is updated with the current emoji, not a URL
+                        const profilePicToSet = (currentProfilePicUrl === '' || currentProfilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : currentProfilePicUrl;
+
                         set(currentUserPresenceRef, {
                             displayName: currentDisplayName, // Ensure we send the current display name
+                            profilePicUrl: profilePicToSet, // Include profile pic URL (emoji)
+                            customStatus: currentCustomStatus, // Include custom status
                             status: 'online',
                             isTyping: false,
                             typingInChatId: null,
@@ -1027,6 +1228,8 @@
 
                     onDisconnect(currentUserPresenceRef).set({
                         displayName: currentDisplayName,
+                        profilePicUrl: (currentProfilePicUrl === '' || currentProfilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : currentProfilePicUrl, // Include profile pic URL (emoji) on disconnect
+                        customStatus: currentCustomStatus, // Include custom status on disconnect
                         status: 'offline',
                         isTyping: false,
                         timestamp: serverTimestamp(),
@@ -1064,15 +1267,30 @@
                     const userData = childSnapshot.val();
                     const userId = childSnapshot.key;
                     
-                    userPresenceMap[userId] = userData;
+                    // Filter out old placeholder URLs from received data too
+                    const userProfilePic = (userData.profilePicUrl === '' || userData.profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : userData.profilePicUrl || '😀';
+                    userPresenceMap[userId] = { ...userData, profilePicUrl: userProfilePic };
 
                     if (userData.status === 'online') {
                         onlineUsersCount++;
 
                         const listItem = document.createElement('li');
-                        listItem.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
                         listItem.dataset.userId = userId;
                         listItem.dataset.displayName = userData.displayName;
+                        
+                        // For online user list, use a span for emoji
+                        const profilePicSpan = document.createElement('span');
+                        profilePicSpan.classList.add('profile-pic-thumbnail', 'mr-2', 'flex', 'items-center', 'justify-center');
+                        profilePicSpan.textContent = userProfilePic; // Display emoji
+                        profilePicSpan.alt = 'A'; // Alt text for accessibility
+                        listItem.appendChild(profilePicSpan);
+
+                        const textSpan = document.createElement('span');
+                        textSpan.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
+                        if (userData.customStatus) {
+                            textSpan.textContent += ` (${userData.customStatus})`;
+                        }
+                        listItem.appendChild(textSpan);
 
                         const hasUnreadFromThisUser = currentUserUnreadFrom[userId];
 
@@ -1085,7 +1303,7 @@
 
                         if (userId === currentUserId) {
                             listItem.classList.add('bg-green-800', 'border-green-600');
-                            listItem.textContent += ' (You)';
+                            textSpan.textContent += ' (You)';
                         } else {
                             listItem.addEventListener('click', () => startPrivateChat(userId, userData.displayName));
                         }
@@ -1144,9 +1362,13 @@
 
             get(currentUserPresenceRef).then(snapshot => {
                 const currentData = snapshot.val() || {};
+                const profilePicToSet = (currentProfilePicUrl === '' || currentProfilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : currentProfilePicUrl;
+
                 set(currentUserPresenceRef, {
                     ...currentData,
                     displayName: currentDisplayName,
+                    profilePicUrl: profilePicToSet, // Ensure profile pic (emoji) is sent
+                    customStatus: currentCustomStatus, // Ensure custom status is sent
                     status: 'online',
                     isTyping: isTyping,
                     typingInChatId: typingStatusChatId,
@@ -1208,6 +1430,14 @@
                 }
             });
 
+            // Update profile pictures (emojis) in message bubbles
+            document.querySelectorAll('.profile-pic-thumbnail[data-user-id]').forEach(spanElement => {
+                const userId = spanElement.dataset.userId;
+                // Filter out old placeholder URLs from userPresenceMap
+                const userPicUrl = userPresenceMap[userId] ? ((userPresenceMap[userId].profilePicUrl === '' || userPresenceMap[userId].profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : userPresenceMap[userId].profilePicUrl) : '😀';
+                spanElement.textContent = userPicUrl; // Display emoji
+            });
+
             document.querySelectorAll('.my-message-seen-status').forEach(seenStatusDiv => {
                 const messageElement = seenStatusDiv.closest('.mb-3');
                 if (!messageElement) return;
@@ -1244,6 +1474,136 @@
         function hideOnlineUsersModal() {
             onlineUsersModal.classList.add('hidden');
         }
+
+        /**
+         * Opens the profile management modal.
+         */
+        function openProfileModal() {
+            profileModal.classList.remove('hidden');
+            // Show the currently selected temporary avatar in the preview
+            profilePicPreview.textContent = tempProfilePicSelection; 
+            profileCallsignInput.value = currentDisplayName;
+            profileCustomStatusInput.value = currentCustomStatus;
+            profileErrorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Closes the profile management modal.
+         */
+        function closeProfileModal() {
+            profileModal.classList.add('hidden');
+            // Reset tempProfilePicSelection to the currently saved currentProfilePicUrl if not saved
+            tempProfilePicSelection = currentProfilePicUrl; 
+        }
+
+        /**
+         * NEW: Opens the avatar selection modal.
+         */
+        function openAvatarSelectionModal() {
+            avatarSelectionModal.classList.remove('hidden');
+            populateAvatarEmojiPicker(); // Ensure picker is populated and selection is highlighted
+        }
+
+        /**
+         * NEW: Closes the avatar selection modal.
+         */
+        function closeAvatarSelectionModal() {
+            avatarSelectionModal.classList.add('hidden');
+        }
+
+        /**
+         * Populates the avatar emoji picker (now in its own modal).
+         */
+        function populateAvatarEmojiPicker() {
+            avatarEmojiPicker.innerHTML = '';
+            avatarEmojis.forEach(emoji => {
+                const button = document.createElement('button');
+                button.textContent = emoji;
+                button.title = `Select ${emoji}`;
+                // Highlight the button if it matches the temporary selection
+                if (emoji === tempProfilePicSelection) {
+                    button.classList.add('selected');
+                }
+                button.addEventListener('click', () => {
+                    // Update only the temporary selection and the preview in the main profile modal
+                    tempProfilePicSelection = emoji; 
+                    profilePicPreview.textContent = tempProfilePicSelection; 
+                    // Update visual selection in the avatar picker modal itself
+                    document.querySelectorAll('.avatar-emoji-picker button').forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    // Automatically close this modal after selection for better UX
+                    closeAvatarSelectionModal(); 
+                    alertMessage(`Avatar selected (unsaved): ${emoji}!`, 'blue');
+                });
+                avatarEmojiPicker.appendChild(button);
+            });
+        }
+
+        /**
+         * Saves profile settings (callsign and custom status, and selected avatar emoji) to Firebase.
+         */
+        async function saveProfileSettings() {
+            if (!currentUserId) {
+                alertMessage("Authentication required to save profile.", 'red');
+                return;
+            }
+
+            const newCallsign = profileCallsignInput.value.trim();
+            const newCustomStatus = profileCustomStatusInput.value.trim();
+            profileErrorMessage.classList.add('hidden');
+
+            if (!newCallsign) {
+                profileErrorMessage.textContent = "Callsign cannot be empty.";
+                profileErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+            
+            try {
+                // Check if new callsign is already in use by another user
+                if (newCallsign !== currentDisplayName) {
+                    const callsignQuery = ref(db, `artifacts/${appId}/public/data/users_presence`);
+                    const snapshot = await get(callsignQuery);
+                    let callsignTaken = false;
+                    snapshot.forEach(childSnapshot => {
+                        if (childSnapshot.val().displayName === newCallsign && childSnapshot.key !== currentUserId) {
+                            callsignTaken = true;
+                        }
+                    });
+                    if (callsignTaken) {
+                        profileErrorMessage.textContent = `Callsign "${newCallsign}" is already in use.`;
+                        profileErrorMessage.classList.remove('hidden');
+                        return;
+                    }
+                }
+                // Ensure the saved profilePicUrl is always an emoji and not the old placeholder URL
+                const profilePicToSave = (tempProfilePicSelection === '' || tempProfilePicSelection === OLD_PLACEHOLDER_URL) ? '😀' : tempProfilePicSelection;
+
+                await update(currentUserPresenceRef, {
+                    displayName: newCallsign,
+                    customStatus: newCustomStatus,
+                    profilePicUrl: profilePicToSave // Save the selected emoji from temp
+                });
+
+                currentDisplayName = newCallsign;
+                currentCustomStatus = newCustomStatus;
+                currentProfilePicUrl = profilePicToSave; // Update main state after successful save
+                localStorage.setItem('chatDisplayName', newCallsign);
+                localStorage.setItem('chatCustomStatus', newCustomStatus);
+                localStorage.setItem('chatProfilePicUrl', currentProfilePicUrl); // Save the selected emoji
+
+                displayUserId.textContent = currentDisplayName; // Update header
+                myProfilePicThumb.textContent = currentProfilePicUrl; // Update thumbnail in header
+                alertMessage("Profile saved successfully!", 'green');
+                closeProfileModal(); // Close profile modal
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                profileErrorMessage.textContent = `Failed to save profile: ${error.message}`;
+                profileErrorMessage.classList.remove('hidden');
+            }
+        }
+
 
         /**
          * Initiates a private chat with a selected user.
@@ -1320,7 +1680,7 @@
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
-            '�', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
+            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
             '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
@@ -1409,6 +1769,7 @@
                     const messagePayload = {
                         userId: currentUserId,
                         displayName: currentDisplayName,
+                        profilePicUrl: (currentProfilePicUrl === '' || currentProfilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : currentProfilePicUrl, // Include sender's profile picture URL (emoji)
                         timestamp: serverTimestamp(),
                     };
 
@@ -1707,6 +2068,9 @@
 
                         const senderName = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}...`;
                         const senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400';
+                        // Get sender's profile picture (emoji) from userPresenceMap, or fall back to message's picUrl, or default
+                        const senderProfilePicUrl = userPresenceMap[msg.userId] ? ((userPresenceMap[msg.userId].profilePicUrl === '' || userPresenceMap[msg.userId].profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : userPresenceMap[msg.userId].profilePicUrl) : ((msg.profilePicUrl === '' || msg.profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : msg.profilePicUrl || '😀');
+
 
                         if (msg.userId === currentUserId) {
                             alignmentClass = 'flex justify-end';
@@ -1751,6 +2115,7 @@
                         messageElement.innerHTML = `
                             <div class="max-w-[80%] p-3.5 rounded-md shadow-inner ${bubbleColorClass} break-words font-['Roboto_Mono']">
                                 <div class="text-xs md:text-sm font-bold ${senderColorClass} mb-1 flex items-center">
+                                    <span class="profile-pic-thumbnail mr-2 flex items-center justify-center" data-user-id="${msg.userId}">${senderProfilePicUrl}</span>
                                     <span>${senderName}</span>
                                     <span class="status-text ${statusColorClass}" data-user-id="${msg.userId}">${statusText}</span>
                                 </div>
