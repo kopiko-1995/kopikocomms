@@ -229,6 +229,31 @@
         .pm-notification-dot.hidden {
             display: none;
         }
+
+        /* Generic modal overlay and content */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: #1a202c;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0, 255, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #10b981;
+            position: relative;
+        }
     </style>
     <!-- Add Google Fonts for a technical look (e.g., Roboto Mono or Oxanium) -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oxanium:wght@400;700&display=swap" rel="stylesheet">
@@ -256,40 +281,74 @@
         </div>
     </div>
 
+    <!-- Authentication Options Screen (Now removed from flow, kept as hidden placeholder) -->
+    <div id="auth-options-screen" class="modal-overlay hidden">
+        <div class="modal-content text-center flex flex-col gap-6">
+            <h3 class="text-xl md:text-2xl font-bold text-green-400 tracking-wider uppercase font-['Oxanium']">Identify Self</h3>
+            <button class="bg-blue-600 text-white font-bold py-3 px-6 rounded-sm w-full">
+                This screen should not be visible.
+            </button>
+        </div>
+    </div>
+
+    <!-- Email/Password Signup/Login Modal -->
+    <div id="signup-login-modal" class="modal-overlay hidden">
+        <div class="modal-content text-center flex flex-col gap-6">
+            <button class="modal-close-button" id="signup-login-close-button">&times;</button>
+            <h3 id="auth-modal-title" class="text-xl md:text-2xl font-bold text-green-400 tracking-wider uppercase font-['Oxanium']">Create Call-Sign</h3>
+            <input
+                type="email"
+                id="auth-email-input"
+                placeholder="Email Address (For Retrieval)"
+                class="p-3 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-base transition duration-200"
+            />
+            <input
+                type="password"
+                id="auth-password-input"
+                placeholder="Secure Key (Password)"
+                class="p-3 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-base transition duration-200"
+            />
+            <input
+                type="text"
+                id="auth-callsign-input"
+                placeholder="Your Callsign (e.g., 'Alpha-7')"
+                class="p-3 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-base transition duration-200 hidden"
+                maxlength="15"
+            />
+            <button
+                id="auth-submit-button"
+                class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold py-3 px-6 rounded-sm transition duration-300 ease-in-out shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700 w-full"
+            >
+                Register
+            </button>
+            <p id="auth-error-message" class="text-red-500 text-sm hidden"></p>
+            <p class="text-gray-400 text-sm">
+                <span id="toggle-auth-mode-text">Already registered?</span>
+                <a href="#" id="toggle-auth-mode-link" class="text-blue-400 hover:text-blue-300 transition-colors duration-200">Log In</a>
+            </p>
+        </div>
+    </div>
+
+
     <!-- Main Chat Container: Industrial, dark panel look - Initially hidden -->
     <div id="chat-app-container" class="bg-gray-900 rounded-lg shadow-xl overflow-hidden w-full h-screen sm:h-[95vh] sm:max-h-[900px] sm:w-[90vw] sm:max-w-5xl flex flex-col border border-gray-700 transition-all duration-300 ease-in-out hidden">
         <!-- Chat Header -->
         <div class="bg-gray-800 p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-y-2 md:gap-x-3 shadow-inner border-b border-green-500 flex-shrink-0">
             <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
-            <!-- User Info and Name Setting Controls -->
+            <!-- User Info (Callsign input removed from here) -->
             <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-1 md:gap-x-2 w-full md:w-auto">
                 <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center">
                     <span class="font-bold text-green-400">Unit:</span> <span id="display-user-id" class="font-extrabold text-green-300 ml-1">UNKNOWN</span> <span id="my-status-indicator" class="status-dot ml-2"></span>
                 </div>
-                <div class="flex items-center gap-1.5 w-full max-w-xs md:max-w-none md:w-auto">
-                    <input
-                        type="text"
-                        id="display-name-input"
-                        placeholder="Callsign"
-                        class="p-1.5 rounded-sm border border-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 bg-gray-700 text-green-300 text-xs md:text-sm flex-grow transition duration-200"
-                        maxlength="15"
-                    />
-                    <button
-                        id="set-display-name-button"
-                        class="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-xs md:text-sm font-semibold py-1.5 px-3 rounded-sm transition duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 border border-green-700"
-                    >
-                        Set Callsign
-                    </button>
-                </div>
-                <!-- Online Users Indicator (New) -->
+                <!-- Callsign input and set button removed from here -->
                 <div id="online-users-indicator" class="flex items-center text-xs md:text-sm font-medium text-gray-400 ml-4 cursor-pointer hover:text-green-300 transition-colors duration-200" title="Click to see online users">
                     <span class="font-bold text-green-400">Online:</span> <span id="online-count" class="font-extrabold text-green-300 ml-1">0</span>
-                    <span id="pm-notification-badge" class="pm-notification-dot hidden"></span> <!-- PM Notification Dot -->
+                    <span id="pm-notification-badge" class="pm-notification-dot hidden"></span>
                 </div>
             </div>
         </div>
 
-        <!-- Current Chat Info (New) -->
+        <!-- Current Chat Info -->
         <div id="chat-context-info" class="bg-gray-800 p-2 md:p-3 text-center text-sm md:text-base border-b border-gray-700 text-gray-400 font-bold flex items-center justify-center gap-2">
             <span id="current-chat-title">Public Channel</span>
             <button id="leave-private-chat-button" class="ml-2 px-3 py-1 bg-red-700 hover:bg-red-600 active:bg-red-800 text-white text-xs rounded-full hidden" title="Return to Public Channel">Exit Private</button>
@@ -297,23 +356,20 @@
 
         <!-- Message Area -->
         <div id="message-area" class="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 message-area bg-gray-900 border-t border-b border-gray-800">
-            <!-- Messages will be injected here by JavaScript -->
             <div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Awaiting Transmission...</div>
-            <!-- Typing indicator will be appended here -->
             <div id="typing-indicator" class="typing-indicator hidden">
                 <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
             </div>
         </div>
 
-        <!-- Message Input and Emoji/Voice Controls (Reduced Height) -->
+        <!-- Message Input and Emoji/Voice Controls -->
         <div class="bg-gray-800 p-3 border-t border-gray-700 flex flex-col relative flex-shrink-0">
             <!-- Emoji Picker -->
             <div id="emoji-picker" class="emoji-picker hidden">
-                <!-- Emojis will be dynamically added here -->
             </div>
 
             <!-- Row 1: Text Input -->
-            <div class="flex-grow mb-2"> <!-- Reduced mb-3 to mb-2 -->
+            <div class="flex-grow mb-2">
                 <input
                     type="text"
                     id="message-input"
@@ -331,7 +387,7 @@
                     Transmit
                 </button>
 
-                <div class="flex-grow"></div> <!-- Spacer to push buttons to the right -->
+                <div class="flex-grow"></div>
 
                 <!-- Voice Recording Buttons -->
                 <button
@@ -355,7 +411,7 @@
                 >
                     ▶️ Send
                 </button>
-                <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Recording Audio...</span> <!-- Reduced font size -->
+                <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Recording Audio...</span>
 
                 <!-- Image Input and Send Button -->
                 <label for="image-input"
@@ -374,7 +430,7 @@
                 >
                     🖼️ Send
                 </button>
-                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Image ready...</span> <!-- Reduced font size -->
+                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Image ready...</span>
 
                 <!-- Emoji Button -->
                 <button
@@ -388,20 +444,19 @@
         </div>
     </div>
 
-    <!-- Online Users Modal (New) -->
+    <!-- Online Users Modal -->
     <div id="online-users-modal" class="online-users-modal hidden">
         <div class="online-users-modal-content">
             <button class="modal-close-button" id="online-users-close-button">&times;</button>
             <h3>Online Operatives</h3>
             <ul id="online-users-list">
-                <!-- Online users will be dynamically inserted here -->
             </ul>
         </div>
     </div>
 
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAAAtQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY2tTAAAAJGNvcPryaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABiYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -409,6 +464,9 @@
         // Import Firebase functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
         import { getDatabase, ref, push, onValue, set, onDisconnect, serverTimestamp, get, query, orderByChild, remove, child, update } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+        // Import Firebase Auth functions
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
 
         // Your web app's Firebase configuration (provided by the user)
         const firebaseConfig = {
@@ -425,6 +483,8 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+
 
         // Access global variables for app ID
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -436,6 +496,18 @@
         const passwordError = document.getElementById('password-error');
         const chatAppContainer = document.getElementById('chat-app-container');
 
+        // Authentication Modals
+        const signupLoginModal = document.getElementById('signup-login-modal');
+        const signupLoginCloseButton = document.getElementById('signup-login-close-button');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authEmailInput = document.getElementById('auth-email-input');
+        const authPasswordInput = document.getElementById('auth-password-input');
+        const authCallsignInput = document.getElementById('auth-callsign-input'); // NEW: Callsign input
+        const authSubmitButton = document.getElementById('auth-submit-button');
+        const authErrorMessage = document.getElementById('auth-error-message');
+        const toggleAuthModeText = document.getElementById('toggle-auth-mode-text');
+        const toggleAuthModeLink = document.getElementById('toggle-auth-mode-link');
+
         // DOM elements for chat interface
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
@@ -443,8 +515,7 @@
         const displayUserId = document.getElementById('display-user-id');
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
-        const displayNameInput = document.getElementById('display-name-input');
-        const setDisplayNameButton = document.getElementById('set-display-name-button');
+        // Removed displayNameInput and setDisplayNameButton from chat UI
         const chatSound = document.getElementById('chat-sound');
         const myStatusIndicator = document.getElementById('my-status-indicator');
 
@@ -454,21 +525,21 @@
         const sendVoiceButton = document.getElementById('send-voice-button');
         const recordingStatus = document.getElementById('recording-status');
 
-        // New image message elements
+        // Image message elements
         const imageInput = document.getElementById('image-input');
         const sendImageButton = document.getElementById('send-image-button');
         const imageButtonLabel = document.getElementById('image-button-label');
         const imagePreviewStatus = document.getElementById('image-preview-status');
 
-        // Online Users Modal elements (New)
+        // Online Users Modal elements
         const onlineUsersIndicator = document.getElementById('online-users-indicator');
         const onlineCountSpan = document.getElementById('online-count');
         const onlineUsersModal = document.getElementById('online-users-modal');
         const onlineUsersList = document.getElementById('online-users-list');
         const onlineUsersCloseButton = document.getElementById('online-users-close-button');
-        const pmNotificationBadge = document.getElementById('pm-notification-badge'); // New: Main PM notification badge
+        const pmNotificationBadge = document.getElementById('pm-notification-badge');
 
-        // Private Chat elements (New)
+        // Private Chat elements
         const chatContextInfo = document.getElementById('chat-context-info');
         const currentChatTitle = document.getElementById('current-chat-title');
         const leavePrivateChatButton = document.getElementById('leave-private-chat-button');
@@ -488,18 +559,15 @@
         let typingTimeout = null;
         const TYPING_INDICATOR_TIMEOUT_MS = 3000; // Time after which typing status is cleared
 
-        // Private chat variables (New)
+        // Private chat variables
         let currentPrivateChatUserId = null; // Stores the userId of the user in a private chat
         let currentPrivateChatDisplayName = null; // Stores the displayName of the user in a private chat
 
 
         // Persistent User ID and Display Name
-        let currentUserId = localStorage.getItem('tacticalChatUserId');
-        if (!currentUserId) {
-            currentUserId = crypto.randomUUID();
-            localStorage.setItem('tacticalChatUserId', currentUserId);
-        }
-        let currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${currentUserId.substring(0, 4).toUpperCase()}`;
+        let currentUserId = null;
+        let currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-UNKNOWN`;
+
 
         // Global map to store online status and typing status of all users
         let userPresenceMap = {};
@@ -507,6 +575,7 @@
         let lastProcessedMessageTimestamp = 0;
 
         const CORRECT_PASSWORD = "rexchat";
+        let authMode = 'signup'; // 'signup' or 'login'
 
         /**
          * Requests notification permission from the user.
@@ -535,10 +604,8 @@
          */
         async function requestMicrophonePermission() {
             try {
-                // Attempt to get a media stream. This will prompt the user if permission is not granted.
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 console.log("Microphone permission granted.");
-                // Immediately stop the tracks to release the microphone as we only needed to check permission.
                 stream.getTracks().forEach(track => track.stop());
             } catch (err) {
                 console.warn("Microphone permission denied or an error occurred:", err);
@@ -553,12 +620,11 @@
          */
         function displayNotification(title, body) {
             if (Notification.permission === "granted" && !document.hidden) {
-                // If permission is granted and the tab is active, no need for notification
                 return;
             } else if (Notification.permission === "granted") {
                 new Notification(title, {
                     body: body,
-                    icon: 'https://placehold.co/48x48/00FF00/FFFFFF?text=Chat', // Placeholder icon
+                    icon: 'https://placehold.co/48x48/00FF00/FFFFFF?text=Chat',
                     vibrate: [200, 100, 200]
                 });
             }
@@ -570,46 +636,45 @@
         function resetInputArea() {
             messageInput.classList.remove('hidden');
             sendButton.classList.remove('hidden');
-            emojiButton.classList.remove('hidden'); // Show emoji button
-            recordVoiceButton.classList.remove('hidden'); // Show record button
-            imageButtonLabel.classList.remove('hidden'); // Show image button label
+            emojiButton.classList.remove('hidden');
+            recordVoiceButton.classList.remove('hidden');
+            imageButtonLabel.classList.remove('hidden');
 
-            // Hide voice specific controls
             stopRecordButton.classList.add('hidden');
             sendVoiceButton.classList.add('hidden');
             recordingStatus.classList.add('hidden');
             
-            // Hide image specific controls
             sendImageButton.classList.add('hidden');
             imagePreviewStatus.classList.add('hidden');
-            imageInput.value = ''; // Clear file input
+            imageInput.value = '';
             selectedImageBase64 = null;
             selectedImageMimeType = null;
 
-            // Clear typing status when input area is reset (e.g., after sending)
             setMyTypingStatus(false);
             
-            // Always scroll to the bottom after resetting input area (e.g., after sending a message)
             messageArea.scrollTop = messageArea.scrollHeight;
         }
 
         /**
-         * Initializes the chat application after successful password authentication.
+         * Initializes the chat application after successful authentication.
          */
         function initializeChatApp() {
-            // Ensure password screen is hidden and chat container is displayed
             passwordScreen.style.display = 'none';
-            chatAppContainer.style.display = 'flex'; // Assuming chatAppContainer uses flexbox
+            signupLoginModal.classList.add('hidden');
 
-            initializeDisplayName();
+            chatAppContainer.style.display = 'flex';
+
+            // Callsign display now only shows the currentDisplayName
+            displayUserId.textContent = currentDisplayName;
+            // displayNameInput is removed, so no need to set its value here
+
             setupPresence();
-            listenForMessages(); // Start listening to public messages by default
-            populateEmojiPicker(); // Make sure emoji picker is populated on app start
-            resetInputArea(); // Call reset to set initial UI state and scroll to bottom
-            requestNotificationPermission(); // Request notification permission on app initialization
-            requestMicrophonePermission(); // Explicitly request microphone permission on app initialization
+            listenForMessages();
+            populateEmojiPicker();
+            resetInputArea();
+            requestNotificationPermission();
+            requestMicrophonePermission();
             
-            // Attach all event listeners here, ensuring DOM elements are ready
             sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -617,12 +682,11 @@
                 }
             });
 
-            // Typing indicator event listener for text input
             messageInput.addEventListener('input', () => {
-                setMyTypingStatus(true); // Start typing
+                setMyTypingStatus(true);
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => {
-                    setMyTypingStatus(false); // Stop typing after timeout
+                    setMyTypingStatus(false);
                 }, TYPING_INDICATOR_TIMEOUT_MS);
             });
 
@@ -637,12 +701,8 @@
                 }
             });
 
-            setDisplayNameButton.addEventListener('click', setDisplayName);
-            displayNameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    setDisplayName();
-                }
-            });
+            // setDisplayNameButton and displayNameInput event listeners are now removed
+            // setDisplayName is still a utility function, but not user-triggered from main chat UI
 
             recordVoiceButton.addEventListener('click', startRecording);
             stopRecordButton.addEventListener('click', stopRecording);
@@ -651,69 +711,289 @@
             imageInput.addEventListener('change', handleImageSelection);
             sendImageButton.addEventListener('click', sendImageMessage);
 
-            // Online Users Modal Event Listeners
             onlineUsersIndicator.addEventListener('click', showOnlineUsersModal);
             onlineUsersCloseButton.addEventListener('click', hideOnlineUsersModal);
 
-            // Private chat event listener
             leavePrivateChatButton.addEventListener('click', leavePrivateChat);
 
-            // Add scroll listener for read receipts
             messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
         }
 
         /**
-         * Handles the login attempt.
+         * Handles the initial "rexchat" password attempt.
          */
-        function handleLogin() {
+        async function handleSecurityKeyLogin() { 
             if (passwordInput.value === CORRECT_PASSWORD) {
-                initializeChatApp();
+                passwordError.classList.add('hidden');
+                passwordScreen.style.display = 'none';
+                showSignupLoginModal('login'); // Directly show the signup/login modal
             } else {
                 passwordError.classList.remove('hidden');
-                passwordInput.value = ''; // Clear input on wrong password
+                passwordError.textContent = "Access Denied. Invalid Key.";
+                passwordInput.value = '';
+            }
+        }
+        
+        /**
+         * Shows the signup/login modal based on the mode.
+         * @param {string} mode - 'signup' or 'login'
+         */
+        function showSignupLoginModal(mode) {
+            authMode = mode;
+            authErrorMessage.classList.add('hidden');
+            authEmailInput.value = '';
+            authPasswordInput.value = '';
+
+            if (mode === 'signup') {
+                authModalTitle.textContent = 'Create Call-Sign';
+                authSubmitButton.textContent = 'Register';
+                toggleAuthModeText.textContent = 'Already registered?';
+                toggleAuthModeLink.textContent = 'Log In';
+                authCallsignInput.classList.remove('hidden'); // Show callsign input for signup
+                authCallsignInput.setAttribute('required', 'true');
+            } else { // 'login'
+                authModalTitle.textContent = 'Retrieve Call-Sign';
+                authSubmitButton.textContent = 'Log In';
+                toggleAuthModeText.textContent = 'New operative?';
+                toggleAuthModeLink.textContent = 'Sign Up';
+                authCallsignInput.classList.add('hidden'); // Hide callsign input for login
+                authCallsignInput.removeAttribute('required');
+            }
+            signupLoginModal.classList.remove('hidden');
+        }
+
+        /**
+         * Toggles between signup and login modes in the modal.
+         */
+        function toggleAuthMode() {
+            showSignupLoginModal(authMode === 'signup' ? 'login' : 'signup');
+        }
+
+        /**
+         * Handles email/password signup.
+         */
+        async function handleEmailSignup() {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            const callsign = authCallsignInput.value.trim();
+
+            authErrorMessage.classList.add('hidden');
+
+            if (!email || !password || !callsign) {
+                authErrorMessage.textContent = "Email, Password, and Callsign cannot be empty.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+            if (password.length < 6) {
+                authErrorMessage.textContent = "Password must be at least 6 characters long.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                let userCredential;
+                const currentUser = auth.currentUser;
+
+                if (currentUser && currentUser.isAnonymous) {
+                    const credential = EmailAuthProvider.credential(email, password);
+                    userCredential = await linkWithCredential(currentUser, credential);
+                    alertMessage("Anonymous account linked successfully!", 'green');
+                } else {
+                    userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                }
+
+                const user = userCredential.user;
+                const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${user.uid}`);
+                
+                // Store the provided callsign with the user's presence data
+                await set(currentUserPresenceRef, {
+                    displayName: callsign,
+                    status: 'online',
+                    isTyping: false,
+                    typingInChatId: null,
+                    lastReadMessageTimestamp: serverTimestamp(),
+                    hasUnreadPrivateMessages: false,
+                    unreadFrom: {},
+                    currentActivePrivateChatWith: null
+                });
+                localStorage.setItem('chatDisplayName', callsign); // Also save to local storage
+
+            } catch (error) {
+                console.error("Email Signup failed:", error);
+                let errorMessage = "Registration failed. Please try again.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "This email is already registered. Please log in instead.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Invalid email address format.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "Password is too weak. Choose a stronger password.";
+                }
+                authErrorMessage.textContent = errorMessage;
+                authErrorMessage.classList.remove('hidden');
             }
         }
 
-        // Always show the password screen and attach event listeners for login
-        passwordScreen.classList.remove('hidden');
-        passwordScreen.style.display = 'flex'; // Ensure password screen is visible
-        loginButton.addEventListener('click', handleLogin);
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleLogin();
+        /**
+         * Handles email/password login.
+         */
+        async function handleEmailLogin() {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            authErrorMessage.classList.add('hidden');
+
+            if (!email || !password) {
+                authErrorMessage.textContent = "Email and Password cannot be empty.";
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Email Login failed:", error);
+                let errorMessage = "Login failed. Invalid credentials.";
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "Invalid email or password.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = "Too many failed login attempts. Please try again later.";
+                }
+                authErrorMessage.textContent = errorMessage;
+                authErrorMessage.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Main authentication state observer.
+         */
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                console.log("Firebase Auth State Changed: User is logged in.", user.uid, "Is anonymous:", user.isAnonymous);
+
+                const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+                try {
+                    const snapshot = await get(currentUserPresenceRef);
+                    const userData = snapshot.val();
+                    if (userData && userData.displayName) {
+                        currentDisplayName = userData.displayName;
+                        localStorage.setItem('chatDisplayName', currentDisplayName);
+                        console.log("Loaded Callsign from Firebase:", currentDisplayName);
+                    } else {
+                        // This case handles users who existed before Callsign in Firebase was mandatory,
+                        // or if there's an issue loading it. A default Callsign is set and saved to Firebase.
+                        currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
+                        localStorage.setItem('chatDisplayName', currentDisplayName);
+                        console.log("Using local/generated Callsign:", currentDisplayName);
+
+                        // Ensure this Callsign is pushed to Firebase if it wasn't there
+                        await update(currentUserPresenceRef, { displayName: currentDisplayName });
+                    }
+                } catch (error) {
+                    console.error("Error fetching user presence data during auth state change:", error);
+                    // Fallback to local storage or generate if Firebase fetch fails
+                    currentDisplayName = localStorage.getItem('chatDisplayName') || `Unit-${user.uid.substring(0, 4).toUpperCase()}`;
+                    localStorage.setItem('chatDisplayName', currentDisplayName);
+                    alertMessage("Failed to retrieve Callsign from database. Using local/default.", 'orange');
+                }
+                
+                initializeChatApp();
+            } else {
+                console.log("Firebase Auth State Changed: User is logged out.");
+                passwordScreen.style.display = 'flex';
+                chatAppContainer.style.display = 'none';
+                signupLoginModal.classList.add('hidden'); // Hide auth modal if user logs out
+
+                currentUserId = null;
+                // currentDisplayName is intentionally kept for local consistency until next login/signup
             }
         });
 
 
-        /**
-         * Loads the display name from local storage or sets a default.
-         * Updates the display name input and the header display.
-         */
-        function initializeDisplayName() {
-            const storedName = localStorage.getItem('chatDisplayName');
-            if (storedName) {
-                currentDisplayName = storedName;
+        // Initial event listeners for password screen
+        passwordScreen.classList.remove('hidden');
+        passwordScreen.style.display = 'flex';
+        loginButton.addEventListener('click', handleSecurityKeyLogin);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSecurityKeyLogin();
             }
-            displayNameInput.value = currentDisplayName;
-            displayUserId.textContent = currentDisplayName;
-            console.log("Current User ID (locally generated):", currentUserId);
-            console.log("Current Callsign:", currentDisplayName);
-        }
+        });
+
+        // Event listeners for Signup/Login Modal
+        signupLoginCloseButton.addEventListener('click', () => {
+            signupLoginModal.classList.add('hidden');
+            if (!auth.currentUser) { // If user is not authenticated, return to password screen
+                 passwordScreen.style.display = 'flex';
+            }
+        });
+        authSubmitButton.addEventListener('click', () => {
+            if (authMode === 'signup') {
+                handleEmailSignup();
+            } else {
+                handleEmailLogin();
+            }
+        });
+        authEmailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                authPasswordInput.focus();
+            }
+        });
+        authPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (authMode === 'signup') {
+                    authCallsignInput.focus(); // Move focus to callsign if signing up
+                } else {
+                    handleEmailLogin(); // Try to log in
+                }
+            }
+        });
+        // NEW: Event listener for Callsign input
+        authCallsignInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && authMode === 'signup') {
+                handleEmailSignup(); // Try to sign up
+            }
+        });
+
+        toggleAuthModeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuthMode();
+        });
+
 
         /**
-         * Sets the user's display name and saves it to local storage.
+         * Sets the user's display name and saves it to local storage and Firebase.
+         * This function is now primarily called internally during auth state changes
+         * and for initial setup, not directly by a user-facing button in the chat.
          */
         function setDisplayName() {
-            const newName = displayNameInput.value.trim();
-            if (newName) {
-                currentDisplayName = newName;
-                localStorage.setItem('chatDisplayName', newName);
-                displayUserId.textContent = newName;
-                alertMessage(`Callsign set to "${newName}"`, 'green');
-                // Also update presence info with new display name
-                // Note: setupPresence's onValue listener will handle actual DB update
-            } else {
-                alertMessage("Callsign cannot be empty.", 'red');
+            // This function is kept for internal logic and Firebase updates,
+            // but the UI elements that directly trigger it are removed.
+            // When `currentDisplayName` changes (e.g., loaded from Firebase),
+            // `displayUserId.textContent` is updated in `initializeChatApp`.
+            
+            // The main logic for saving display name to Firebase is now integrated
+            // into `handleEmailSignup` and `onAuthStateChanged` for initial setup/loading.
+
+            // This part might be reached if `currentDisplayName` is initially 'Unit-UNKNOWN'
+            // or derived from a partial UID, and `setupPresence` is called.
+            if (currentUserId && currentDisplayName && !currentDisplayName.startsWith('Unit-UNKNOWN')) {
+                const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
+                get(currentUserPresenceRef).then(snapshot => {
+                    const existingData = snapshot.val() || {};
+                    if (existingData.displayName !== currentDisplayName) { // Only update if different
+                        set(currentUserPresenceRef, {
+                            ...existingData,
+                            displayName: currentDisplayName,
+                            timestamp: serverTimestamp()
+                        }).then(() => {
+                            console.log(`Callsign updated in Firebase: "${currentDisplayName}"`);
+                        }).catch(error => {
+                            console.error("Error updating display name in Firebase:", error);
+                        });
+                    }
+                }).catch(error => {
+                    console.error("Error fetching presence data for display name update in setDisplayName:", error);
+                });
             }
         }
 
@@ -721,119 +1001,117 @@
          * Sets up the Firebase Realtime Database presence system for the current user.
          */
         function setupPresence() {
+            if (!currentUserId) {
+                console.error("setupPresence called but currentUserId is null. User not authenticated yet.");
+                return;
+            }
+
             const connectedRef = ref(db, '.info/connected');
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
 
             onValue(connectedRef, (snapshot) => {
                 if (snapshot.val() === true) {
-                    // We are connected. Set our status to online.
-                    // Fetch existing data to preserve 'unreadFrom' and 'hasUnreadPrivateMessages'
                     get(currentUserPresenceRef).then(dataSnapshot => {
                         const existingData = dataSnapshot.val() || {};
                         set(currentUserPresenceRef, {
-                            displayName: currentDisplayName,
+                            displayName: currentDisplayName, // Ensure we send the current display name
                             status: 'online',
-                            isTyping: false, // Default to not typing
-                            lastReadMessageTimestamp: serverTimestamp(), // Update on connect
-                            hasUnreadPrivateMessages: existingData.hasUnreadPrivateMessages || false, // Preserve existing
-                            unreadFrom: existingData.unreadFrom || {}, // Preserve existing
-                            currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Set current private chat status
+                            isTyping: false,
+                            typingInChatId: null,
+                            lastReadMessageTimestamp: serverTimestamp(),
+                            hasUnreadPrivateMessages: existingData.hasUnreadPrivateMessages || false,
+                            unreadFrom: existingData.unreadFrom || {},
+                            currentActivePrivateChatWith: currentPrivateChatUserId 
                         });
                     }).catch(e => console.error("Error fetching presence data on connect:", e));
 
-                    // Set up onDisconnect to mark us offline and not typing when connection is lost/app closed
                     onDisconnect(currentUserPresenceRef).set({
                         displayName: currentDisplayName,
                         status: 'offline',
                         isTyping: false,
-                        timestamp: serverTimestamp()
+                        timestamp: serverTimestamp(),
+                        typingInChatId: null
                     });
                     myStatusIndicator.classList.remove('offline');
                     myStatusIndicator.classList.add('online');
                 } else {
-                    // We are disconnected from Firebase. Update UI, onDisconnect will handle DB.
                     myStatusIndicator.classList.remove('online');
                     myStatusIndicator.classList.add('offline');
                 }
             });
 
-            // Listen for all users' presence changes to update the global map and UI
             onValue(ref(db, `artifacts/${appId}/public/data/users_presence`), (snapshot) => {
                 console.log("[setupPresence] Users presence snapshot received.");
-                userPresenceMap = {}; // Clear map to rebuild
+                userPresenceMap = {};
                 let anyOtherUserTyping = false;
-                let onlineUsersCount = 0; // Initialize online user count
-                let totalUnreadPrivateMessages = 0; // NEW: Count unread PMs for current user
+                let onlineUsersCount = 0;
+                let totalUnreadPrivateMessages = 0;
 
-                onlineUsersList.innerHTML = ''; // Clear previous list
+                onlineUsersList.innerHTML = '';
 
-                // Get current user's unreadFrom state for badge calculation
                 const currentUserData = snapshot.val()?.[currentUserId];
                 const currentUserUnreadFrom = currentUserData?.unreadFrom || {};
-                console.log(`[setupPresence] Current user (${currentUserId}) unreadFrom state:`, currentUserUnreadFrom);
 
+                let currentActiveChatIdForThisClient = null;
+                if (currentPrivateChatUserId) {
+                    const ids = [currentUserId, currentPrivateChatUserId].sort();
+                    currentActiveChatIdForThisClient = `${ids[0]}_${ids[1]}`;
+                } else {
+                    currentActiveChatIdForThisClient = "public";
+                }
 
                 snapshot.forEach((childSnapshot) => {
                     const userData = childSnapshot.val();
                     const userId = childSnapshot.key;
                     
-                    userPresenceMap[userId] = userData; // Always store user data even if offline
+                    userPresenceMap[userId] = userData;
 
                     if (userData.status === 'online') {
-                        onlineUsersCount++; // Increment count for each online user
+                        onlineUsersCount++;
 
-                        // Add user to the online users list in the modal, making it clickable for private chat
                         const listItem = document.createElement('li');
                         listItem.textContent = userData.displayName || `Unit-${userId.substring(0, 4).toUpperCase()}...`;
-                        listItem.dataset.userId = userId; // Store userId on the element
-                        listItem.dataset.displayName = userData.displayName; // Store displayName on the element
+                        listItem.dataset.userId = userId;
+                        listItem.dataset.displayName = userData.displayName;
 
-                        // Check for unread private messages *from this user* to the *current user*
                         const hasUnreadFromThisUser = currentUserUnreadFrom[userId];
-                        console.log(`[setupPresence] User ${userId} (${userData.displayName}) - unreadFrom current user: ${hasUnreadFromThisUser}`);
 
                         if (userId !== currentUserId && hasUnreadFromThisUser) {
                             const pmDot = document.createElement('span');
                             pmDot.classList.add('pm-notification-dot');
                             listItem.appendChild(pmDot);
-                            totalUnreadPrivateMessages++; // Increment for main badge
-                            console.log(`[setupPresence] Adding PM dot for ${userData.displayName}. Total unread: ${totalUnreadPrivateMessages}`);
+                            totalUnreadPrivateMessages++;
                         }
 
                         if (userId === currentUserId) {
-                            listItem.classList.add('bg-green-800', 'border-green-600'); // Highlight current user
+                            listItem.classList.add('bg-green-800', 'border-green-600');
                             listItem.textContent += ' (You)';
                         } else {
                             listItem.addEventListener('click', () => startPrivateChat(userId, userData.displayName));
                         }
                         onlineUsersList.appendChild(listItem);
                         
-                        if (userId !== currentUserId && userData.isTyping) {
+                        if (userId !== currentUserId && userData.typingInChatId === currentActiveChatIdForThisClient) {
                             anyOtherUserTyping = true;
                         }
                     }
                 });
-                onlineCountSpan.textContent = onlineUsersCount; // Update the displayed count
+                onlineCountSpan.textContent = onlineUsersCount;
                 
-                // NEW: Update the main PM notification badge
                 if (pmNotificationBadge) {
                     if (totalUnreadPrivateMessages > 0) {
                         pmNotificationBadge.classList.remove('hidden');
-                        console.log(`[setupPresence] Main PM badge shown. Total unread: ${totalUnreadPrivateMessages}`);
                     } else {
                         pmNotificationBadge.classList.add('hidden');
-                        console.log(`[setupPresence] Main PM badge hidden. Total unread: ${totalUnreadPrivateMessages}`);
                     }
                 }
 
-                updateAllMessageStatusesInUI(); // Update status for all displayed messages
+                updateAllMessageStatusesInUI();
 
-                // Update typing indicator visibility
                 const typingIndicatorElement = document.getElementById('typing-indicator');
                 if (typingIndicatorElement) {
                     if (anyOtherUserTyping) {
                         typingIndicatorElement.classList.remove('hidden');
-                        // Scroll to bottom to show typing indicator if it's new
                         messageArea.scrollTop = messageArea.scrollHeight;
                     } else {
                         typingIndicatorElement.classList.add('hidden');
@@ -847,17 +1125,33 @@
          * @param {boolean} isTyping - True if typing, false otherwise.
          */
         function setMyTypingStatus(isTyping) {
+            if (!currentUserId) {
+                console.warn("Cannot set typing status: currentUserId is null. User not authenticated.");
+                return;
+            }
+
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-            // Fetch current state to avoid overwriting unreadFrom and hasUnreadPrivateMessages
+            let typingStatusChatId = null;
+
+            if (isTyping) {
+                if (currentPrivateChatUserId) {
+                    const ids = [currentUserId, currentPrivateChatUserId].sort();
+                    typingStatusChatId = `${ids[0]}_${ids[1]}`;
+                } else {
+                    typingStatusChatId = "public";
+                }
+            }
+
             get(currentUserPresenceRef).then(snapshot => {
                 const currentData = snapshot.val() || {};
                 set(currentUserPresenceRef, {
-                    ...currentData, // Preserve existing data
-                    displayName: currentDisplayName, // Ensure display name is current
-                    status: 'online', // Ensure status is online
+                    ...currentData,
+                    displayName: currentDisplayName,
+                    status: 'online',
                     isTyping: isTyping,
-                    timestamp: serverTimestamp(), // Update timestamp to keep presence active
-                    currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Maintain current private chat status
+                    typingInChatId: typingStatusChatId,
+                    timestamp: serverTimestamp(),
+                    currentActivePrivateChatWith: currentPrivateChatUserId 
                 });
             }).catch(error => console.error("Error setting typing status:", error));
         }
@@ -866,26 +1160,27 @@
          * Updates the current user's last read message timestamp.
          */
         function updateMyLastReadMessageTimestamp() {
-            // Only update if scrolled near the bottom
-            const tolerance = 50; // pixels from the bottom
+            if (!currentUserId) {
+                console.warn("Cannot update last read timestamp: currentUserId is null. User not authenticated.");
+                return;
+            }
+
+            const tolerance = 50;
             if (messageArea.scrollHeight - messageArea.scrollTop <= messageArea.clientHeight + tolerance) {
-                // Get the timestamp of the last message displayed
-                const allMessageElements = messageArea.querySelectorAll('.mb-3'); // Select all message bubbles
+                const allMessageElements = messageArea.querySelectorAll('.mb-3');
                 const lastMessageElement = allMessageElements.length > 0 ? allMessageElements[allMessageElements.length - 1] : null;
 
-                if (lastMessageElement && lastMessageElement.dataset.timestamp) { // Check if it's a message that needs seen status
+                if (lastMessageElement && lastMessageElement.dataset.timestamp) {
                     const lastMessageTimestamp = parseInt(lastMessageElement.dataset.timestamp);
                     const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-                    // Only update if the new timestamp is greater than the current one in DB
                     if (!userPresenceMap[currentUserId] || userPresenceMap[currentUserId].lastReadMessageTimestamp < lastMessageTimestamp) {
-                        // Fetch current data to avoid overwriting unread private message flags
                         get(currentUserPresenceRef).then(snapshot => {
                             const currentData = snapshot.val() || {};
                             set(currentUserPresenceRef, {
-                                ...currentData, // Preserve existing data
+                                ...currentData,
                                 lastReadMessageTimestamp: lastMessageTimestamp,
-                                timestamp: serverTimestamp(), // Update timestamp to keep presence active
-                                currentActivePrivateChatWith: currentPrivateChatUserId // NEW: Maintain current private chat status
+                                timestamp: serverTimestamp(),
+                                currentActivePrivateChatWith: currentPrivateChatUserId 
                             });
                         }).catch(error => console.error("Error updating last read timestamp:", error));
                     }
@@ -906,22 +1201,20 @@
                 indicator.classList.remove('online', 'offline');
                 if (userStatus === 'online') {
                     indicator.classList.add('online');
-                    indicator.style.color = '#10b981'; /* Tailwind green-500 */
+                    indicator.style.color = '#10b981';
                 } else {
                     indicator.classList.add('offline');
-                    indicator.style.color = '#ef4444'; /* Tailwind red-500 */
+                    indicator.style.color = '#ef4444';
                 }
             });
 
-            // Update read receipts for my messages
             document.querySelectorAll('.my-message-seen-status').forEach(seenStatusDiv => {
-                const messageElement = seenStatusDiv.closest('.mb-3'); // Get the parent message element
-                if (!messageElement) return; // Should not happen if HTML structure is correct
+                const messageElement = seenStatusDiv.closest('.mb-3');
+                if (!messageElement) return;
 
                 const messageTimestamp = parseInt(messageElement.dataset.timestamp);
                 const seenBy = [];
                 for (const userId in userPresenceMap) {
-                    // Only consider "seen by" for other online users who have read up to this message
                     if (userId !== currentUserId && userPresenceMap[userId].status === 'online' &&
                         userPresenceMap[userId].lastReadMessageTimestamp &&
                         userPresenceMap[userId].lastReadMessageTimestamp >= messageTimestamp) {
@@ -964,19 +1257,16 @@
 
             currentChatTitle.textContent = `Private Comms with ${targetDisplayName}`;
             leavePrivateChatButton.classList.remove('hidden');
-            hideOnlineUsersModal(); // Close the online users modal
+            hideOnlineUsersModal();
 
-            // Update current user's presence to show they are in a private chat with targetUser
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
             update(currentUserPresenceRef, { currentActivePrivateChatWith: targetUserId })
                 .then(() => console.log(`[startPrivateChat] Current user presence updated: in private chat with ${targetUserId}.`))
                 .catch(e => console.error("[startPrivateChat] Error updating currentActivePrivateChatWith:", e));
 
-            // Mark unread private messages from this sender as read for the current user
             const currentUserUnreadFromSpecificRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}/unreadFrom/${targetUserId}`);
             remove(currentUserUnreadFromSpecificRef).then(() => {
                 console.log(`[startPrivateChat] Marked unread messages from ${targetDisplayName} as read for ${currentUserId}.`);
-                // After marking as read for this specific sender, check if there are any other unread messages left
                 const currentUserUnreadFromRootRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}/unreadFrom`);
                 get(currentUserUnreadFromRootRef).then(snapshot => {
                     if (!snapshot.exists() || Object.keys(snapshot.val()).length === 0) {
@@ -989,17 +1279,15 @@
             }).catch(e => console.error("[startPrivateChat] Error removing unreadFrom flag:", e));
 
 
-            // Clear existing messages and load private messages (placeholder for now)
             messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Establishing Private Channel...</div>
                                     <div id="typing-indicator" class="typing-indicator hidden">
                                     <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
                                     </div>`;
 
-            // Stop listening to public messages and start listening to private messages
-            listenForMessages(); // Re-call to switch listener
+            listenForMessages();
 
             alertMessage(`Initiating private comms with ${targetDisplayName}`, 'blue');
-            messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom
+            messageArea.scrollTop = messageArea.scrollHeight;
         }
 
         /**
@@ -1013,20 +1301,17 @@
             currentChatTitle.textContent = 'Public Channel';
             leavePrivateChatButton.classList.add('hidden');
 
-            // Update current user's presence to show they are no longer in a private chat
             const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
             update(currentUserPresenceRef, { currentActivePrivateChatWith: null })
                 .then(() => console.log(`[leavePrivateChat] Current user presence updated: back to public channel.`))
                 .catch(e => console.error("[leavePrivateChat] Error updating currentActivePrivateChatWith to null:", e));
 
-            // Show loading indicator immediately
             messageArea.innerHTML = `<div id="loading-indicator" class="text-center text-gray-500 mt-8 text-sm md:text-base">Re-establishing Public Channel...</div>
                                     <div id="typing-indicator" class="typing-indicator hidden">
                                     <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
                                     </div>`;
-            messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom to ensure loading indicator is visible
+            messageArea.scrollTop = messageArea.scrollHeight;
 
-            // Call listenForMessages to re-attach the listener for public messages.
             listenForMessages(); 
 
             alertMessage("Returned to public comms channel.", 'blue');
@@ -1035,9 +1320,9 @@
 
         // Array of common emojis (renamed to 'protocol_icons' for military theme)
         const protocol_icons = [
-            '👍', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
+            '�', '✅', '❌', '⚠️', '🚨', '📍', '🗺️', '📡', '⚙️', '🛡️',
             '⬆️', '⬇️', '⬅️', '➡️', '🧊', '🔥', '💧', '💨', '☀️', '☁️', '🌧️', '❄️',
-            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '�', '🔬',
+            '🎯', '💣', '🚩', '💡', '💬', '🎶', '🔇', '🔈', '🔊', '🔬',
             '🔎', '🔑', '🔗', '🔒', '🔓',
             '📊', '📈', '📉', '📊', '📝'
         ];
@@ -1046,15 +1331,15 @@
          * Populates the emoji picker with buttons for each emoji.
          */
         function populateEmojiPicker() {
-            emojiPicker.innerHTML = ''; // Clear previous emojis to prevent duplicates if called multiple times
+            emojiPicker.innerHTML = '';
             protocol_icons.forEach(emoji => {
                 const button = document.createElement('button');
                 button.textContent = emoji;
-                button.title = emoji; // Add title for accessibility
+                button.title = emoji;
                 button.addEventListener('click', () => {
-                    messageInput.value += emoji; // Append emoji to input
-                    emojiPicker.classList.add('hidden'); // Hide picker after selection
-                    messageInput.focus(); // Keep focus on input
+                    messageInput.value += emoji;
+                    emojiPicker.classList.add('hidden');
+                    messageInput.focus();
                 });
                 emojiPicker.appendChild(button);
             });
@@ -1064,10 +1349,8 @@
          * Cleans up old messages, retaining only the latest 30.
          */
         async function cleanupOldMessages() {
-            // Only cleanup public messages, private messages are handled by Firebase RTDB security rules by default
             const messagesRef = ref(db, `artifacts/${appId}/public/data/messages`); 
             try {
-                // Get a snapshot of all messages, ordered by timestamp
                 const snapshot = await get(query(messagesRef, orderByChild('timestamp')));
                 
                 if (snapshot.exists()) {
@@ -1078,16 +1361,13 @@
                         messagesArray.push({ id: childSnapshot.key, ...childSnapshot.val() });
                     });
 
-                    // Sort messages by timestamp to ensure correct ordering for deletion
                     messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
                     if (messagesArray.length > 30) {
-                        // Identify messages to delete (all except the last 30)
                         for (let i = 0; i < messagesArray.length - 30; i++) {
                             messagesToDelete.push(messagesArray[i].id);
                         }
 
-                        // Delete each identified message
                         const deletePromises = messagesToDelete.map(msgId => {
                             return remove(child(messagesRef, msgId));
                         });
@@ -1106,17 +1386,20 @@
          * This function now handles text, audio, and image messages.
          */
         async function sendMessage() {
+            if (!currentUserId) {
+                alertMessage("Authentication required to send messages. Please log in or sign up.", 'red');
+                return;
+            }
+
             const messageText = messageInput.value.trim();
-            let messagesPath = ''; // Determine if public or private
+            let messagesPath = '';
 
             if (currentPrivateChatUserId) {
-                // Private chat message
                 const chatPartnerId = currentPrivateChatUserId;
                 const ids = [currentUserId, chatPartnerId].sort();
-                const chatId = `${ids[0]}_${ids[1]}`; // Consistent chat ID
+                const chatId = `${ids[0]}_${ids[1]}`;
                 messagesPath = `artifacts/${appId}/private_chats/${chatId}/messages`;
             } else {
-                // Public chat message
                 messagesPath = `artifacts/${appId}/public/data/messages`;
             }
 
@@ -1129,11 +1412,10 @@
                         timestamp: serverTimestamp(),
                     };
 
-                    if (messageText) { // Text message
+                    if (messageText) {
                         messagePayload.text = messageText;
                         messagePayload.type = 'text';
-                    } else if (audioBlob) { // Audio message
-                        // For audio, we need to read the blob first then send
+                    } else if (audioBlob) {
                         const reader = new FileReader();
                         reader.onloadend = async () => {
                             messagePayload.audioData = reader.result;
@@ -1141,62 +1423,50 @@
                             messagePayload.type = 'audio';
                             await push(messagesRef, messagePayload);
 
-                            // NEW: Mark recipient with unread PMs if private chat, ONLY IF RECIPIENT IS NOT CURRENTLY IN CHAT WITH SENDER
                             if (currentPrivateChatUserId) {
                                 const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
                                 get(recipientPresenceRef).then(recipientSnapshot => {
                                     const recipientData = recipientSnapshot.val();
                                     const isRecipientCurrentlyChattingWithMe = recipientData && recipientData.currentActivePrivateChatWith === currentUserId;
-                                    console.log(`[sendMessage] Recipient (${currentPrivateChatUserId}) currentActivePrivateChatWith: ${recipientData?.currentActivePrivateChatWith}. Is recipient chatting with me? ${isRecipientCurrentlyChattingWithMe}`);
 
                                     if (!isRecipientCurrentlyChattingWithMe) {
-                                        console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
                                         update(recipientPresenceRef, {
                                             hasUnreadPrivateMessages: true,
-                                            [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                                            [`unreadFrom/${currentUserId}`]: true
                                         }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
-                                    } else {
-                                        console.log(`[sendMessage] Recipient ${currentPrivateChatDisplayName} is already in chat with sender, not setting unread PM flag.`);
                                     }
                                 }).catch(e => console.error("Error fetching recipient presence for unread check:", e));
                             }
 
-                            // Reset voice recording UI after sending
                             audioBlob = null;
                             audioChunks = [];
                             audioMimeType = '';
-                            resetInputArea(); // Reset input area after sending and scroll to bottom
-                            if (!currentPrivateChatUserId) { // Only cleanup public messages this way
+                            resetInputArea();
+                            if (!currentPrivateChatUserId) {
                                 cleanupOldMessages(); 
                             }
                         };
                         reader.readAsDataURL(audioBlob);
-                        return; // Exit function after starting FileReader
-                    } else if (selectedImageBase64) { // Image message
+                        return;
+                    } else if (selectedImageBase64) {
                         messagePayload.imageData = selectedImageBase64;
                         messagePayload.imageMimeType = selectedImageMimeType;
                         messagePayload.type = 'image';
                     }
 
-                    // Push message for text and image
                     await push(messagesRef, messagePayload);
 
-                    // NEW: Mark recipient with unread PMs if private chat (for text and image messages), ONLY IF RECIPIENT IS NOT CURRENTLY IN CHAT WITH SENDER
                     if (currentPrivateChatUserId) {
                         const recipientPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentPrivateChatUserId}`);
                         get(recipientPresenceRef).then(recipientSnapshot => {
                             const recipientData = recipientSnapshot.val();
                             const isRecipientCurrentlyChattingWithMe = recipientData && recipientData.currentActivePrivateChatWith === currentUserId;
-                            console.log(`[sendMessage] Recipient (${currentPrivateChatUserId}) currentActivePrivateChatWith: ${recipientData?.currentActivePrivateChatWith}. Is recipient chatting with me? ${isRecipientCurrentlyChattingWithMe}`);
 
                             if (!isRecipientCurrentlyChattingWithMe) {
-                                console.log(`[sendMessage] Marking ${currentPrivateChatDisplayName} (${currentPrivateChatUserId}) as having unread PM from ${currentDisplayName}`);
                                 update(recipientPresenceRef, {
                                     hasUnreadPrivateMessages: true,
-                                    [`unreadFrom/${currentUserId}`]: true // Mark specifically from current user
+                                    [`unreadFrom/${currentUserId}`]: true
                                 }).catch(e => console.error("Error setting unread PM flag on recipient:", e));
-                            } else {
-                                console.log(`[sendMessage] Recipient ${currentPrivateChatDisplayName} is already in chat with sender, not setting unread PM flag.`);
                             }
                         }).catch(e => console.error("Error fetching recipient presence for unread check:", e));
                     }
@@ -1205,19 +1475,17 @@
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
                 } finally {
-                    // This finally block will execute for text and image messages.
-                    // For audio, it's handled inside the reader.onloadend callback.
-                    if (!audioBlob) { // Only run if not an audio message (which has its own reset)
-                        messageInput.value = ''; // Clear input field
-                        resetInputArea(); // Reset input area after sending and scroll to bottom
-                        if (!currentPrivateChatUserId) { // Only cleanup public messages this way
+                    if (!audioBlob) {
+                        messageInput.value = '';
+                        resetInputArea();
+                        if (!currentPrivateChatUserId) {
                             cleanupOldMessages(); 
                         }
                     }
                 }
             } else {
                 alertMessage("No content to transmit.", 'red');
-                resetInputArea(); // Scroll to bottom in case of no content
+                resetInputArea();
             }
         }
 
@@ -1225,8 +1493,12 @@
          * Starts recording audio.
          */
         async function startRecording() {
+            if (!currentUserId) {
+                alertMessage("Authentication required to record messages. Please log in or sign up.", 'red');
+                return;
+            }
+
             try {
-                // Ensure mic permission is granted before starting recording
                 const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
                 if (permissionStatus.state === 'denied') {
                     alertMessage("Microphone access denied. Please enable it in your browser settings to record audio.", 'red');
@@ -1234,12 +1506,11 @@
                 }
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Check for MediaRecorder support. Use 'audio/webm' as preferred.
                 const options = { mimeType: 'audio/webm' };
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    options.mimeType = 'audio/ogg'; // Fallback for some browsers
+                    options.mimeType = 'audio/ogg';
                     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                        options.mimeType = 'audio/wav'; // Another fallback
+                        options.mimeType = 'audio/wav';
                         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                             alertMessage("Audio recording not supported in this browser.", 'red');
                             return;
@@ -1248,7 +1519,7 @@
                 }
                 
                 mediaRecorder = new MediaRecorder(stream, options);
-                audioMimeType = options.mimeType; // Store the actual mime type being used
+                audioMimeType = options.mimeType;
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = event => {
@@ -1257,36 +1528,33 @@
 
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: audioMimeType });
-                    // Correctly toggle buttons after stopping recording
-                    stopRecordButton.classList.add('hidden'); // Hide stop
-                    sendVoiceButton.classList.remove('hidden'); // Show send
-                    recordVoiceButton.classList.add('hidden'); // Ensure record is still hidden until sent
-                    recordingStatus.classList.add('hidden'); // Hide status
+                    stopRecordButton.classList.add('hidden');
+                    sendVoiceButton.classList.remove('hidden');
+                    recordVoiceButton.classList.add('hidden');
+                    recordingStatus.classList.add('hidden');
                 };
 
                 mediaRecorder.start();
-                recordVoiceButton.classList.add('record-button-active'); // Add pulsing animation
+                recordVoiceButton.classList.add('record-button-active');
                 
-                // Hide other input methods
-                recordVoiceButton.classList.add('hidden'); // Hide record button itself
-                stopRecordButton.classList.remove('hidden'); // Show stop button
-                recordingStatus.classList.remove('hidden'); // Show recording status
-                sendVoiceButton.classList.add('hidden'); // Hide send voice button
-                messageInput.classList.add('hidden'); // Hide text input
-                sendButton.classList.add('hidden'); // Hide text send button
-                emojiButton.classList.add('hidden'); // Hide emoji button
-                imageButtonLabel.classList.add('hidden'); // Hide image button
-                sendImageButton.classList.add('hidden'); // Hide send image button
-                imagePreviewStatus.classList.add('hidden'); // Hide image status
+                recordVoiceButton.classList.add('hidden');
+                stopRecordButton.classList.remove('hidden');
+                recordingStatus.classList.remove('hidden');
+                sendVoiceButton.classList.add('hidden');
+                messageInput.classList.add('hidden');
+                sendButton.classList.add('hidden');
+                emojiButton.classList.add('hidden');
+                imageButtonLabel.classList.add('hidden');
+                sendImageButton.classList.add('hidden');
+                imagePreviewStatus.classList.add('hidden');
 
-                setMyTypingStatus(false); // Ensure typing status is off when recording
+                setMyTypingStatus(false);
                 alertMessage("Audio log initiated...", 'blue');
 
-            } /* catches (err) */ catch (err) {
+            } catch (err) {
                 console.error("Error accessing microphone:", err);
-                // The permission check above should catch 'denied' state. This catch handles other errors like device not found.
                 alertMessage("Failed to access microphone. Check if a microphone is connected.", 'red');
-                resetInputArea(); // Reset UI in case of error
+                resetInputArea();
             }
         }
 
@@ -1296,7 +1564,7 @@
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 alertMessage("Audio log terminated. Ready for transmit.", 'blue');
             }
         }
@@ -1306,10 +1574,10 @@
          */
         async function sendVoiceMessage() {
             if (audioBlob && currentUserId) {
-                sendMessage(); // Use the general sendMessage function for this
+                sendMessage();
             } else {
                 alertMessage("No audio log detected for transmission.", 'red');
-                resetInputArea(); // Scroll to bottom if no audio
+                resetInputArea();
             }
         }
 
@@ -1317,11 +1585,17 @@
          * Handles image file selection.
          */
         function handleImageSelection(event) {
+            if (!currentUserId) {
+                alertMessage("Authentication required to send images. Please log in or sign up.", 'red');
+                imageInput.value = '';
+                return;
+            }
+
             const file = event.target.files[0];
             if (file) {
                 if (!file.type.startsWith('image/')) {
                     alertMessage("Please select an image file.", 'red');
-                    imageInput.value = ''; // Clear file input
+                    imageInput.value = '';
                     selectedImageBase64 = null;
                     selectedImageMimeType = null;
                     resetInputArea();
@@ -1333,9 +1607,8 @@
                     selectedImageBase64 = reader.result;
                     selectedImageMimeType = file.type;
 
-                    // Show image send button and hide other input methods
                     sendImageButton.classList.remove('hidden');
-                    imagePreviewStatus.classList.remove('hidden'); // Show status like "Image ready..."
+                    imagePreviewStatus.classList.remove('hidden');
                     
                     messageInput.classList.add('hidden');
                     sendButton.classList.add('hidden');
@@ -1343,17 +1616,19 @@
                     stopRecordButton.classList.add('hidden');
                     sendVoiceButton.classList.add('hidden');
                     recordingStatus.classList.add('hidden');
-                    emojiButton.classList.add('hidden'); // Hide emoji button when image is selected
-                    imageButtonLabel.classList.add('hidden'); // Hide image button label itself
+                    emojiButton.classList.add('hidden');
+                    imageButtonLabel.classList.add('hidden');
+                    sendImageButton.classList.add('hidden');
+                    imagePreviewStatus.classList.add('hidden');
 
-                    setMyTypingStatus(false); // Ensure typing status is off when selecting image
+                    setMyTypingStatus(false);
                     alertMessage("Image selected, ready for transmission.", 'blue');
                 };
                 reader.readAsDataURL(file);
             } else {
                 selectedImageBase64 = null;
                 selectedImageMimeType = null;
-                resetInputArea(); // Scroll to bottom if no image
+                resetInputArea();
             }
         }
 
@@ -1362,10 +1637,10 @@
          */
         async function sendImageMessage() {
             if (selectedImageBase64 && currentUserId) {
-                sendMessage(); // Use the general sendMessage function for this
+                sendMessage();
             } else {
                 alertMessage("No image detected for transmission.", 'red');
-                resetInputArea(); // Scroll to bottom if no image
+                resetInputArea();
             }
         }
 
@@ -1377,7 +1652,6 @@
         let privateMessageUnsubscribe = null;
 
         function listenForMessages() {
-            // Unsubscribe from previous listeners if any
             if (publicMessageUnsubscribe) {
                 publicMessageUnsubscribe();
                 publicMessageUnsubscribe = null;
@@ -1391,91 +1665,71 @@
 
             let messagesRef;
             if (currentPrivateChatUserId) {
-                // Listen to private messages
                 const ids = [currentUserId, currentPrivateChatUserId].sort();
                 const chatId = `${ids[0]}_${ids[1]}`;
                 messagesRef = ref(db, `artifacts/${appId}/private_chats/${chatId}/messages`);
                 console.log(`[listenForMessages] Actively listening to private chat: ${messagesRef.toString()}`);
             } else {
-                // Listen to public messages
                 messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
                 console.log(`[listenForMessages] Actively listening to public chat: ${messagesRef.toString()}`);
             }
 
-            // Assign the correct unsubscribe function
             const unsubscribe = onValue(messagesRef, (snapshot) => {
-                // Get fresh references to these elements *after* any potential innerHTML overwrites
                 const currentLoadingIndicator = document.getElementById('loading-indicator');
                 const currentTypingIndicator = document.getElementById('typing-indicator');
 
                 if (currentLoadingIndicator) {
-                    currentLoadingIndicator.style.display = 'none'; // Hide loading indicator once data starts coming
-                    // No need to remove it here, as it's part of the static HTML in the innerHTML reset
-                    // and its display is handled by 'none'
+                    currentLoadingIndicator.style.display = 'none';
                 }
-                console.log(`[listenForMessages] Snapshot received for ${currentPrivateChatUserId ? 'private' : 'public'} chat. Path: ${messagesRef.toString()}. Snapshot exists: ${snapshot.exists()}.`);
                 
-                // Clear all existing message elements, preserving only the current loading/typing indicators
                 Array.from(messageArea.children).forEach(child => {
-                    // Check if the child is neither the current loading indicator nor the current typing indicator
                     if (child !== currentLoadingIndicator && child !== currentTypingIndicator) {
                         child.remove();
                     }
                 });
 
-                // Track the timestamp of the latest message in this snapshot to prevent re-triggering sound/notification
                 let currentLastMessageTimestamp = 0;
 
                 if (snapshot.exists()) {
                     const messagesData = snapshot.val();
                     const messagesArray = [];
 
-                    // Convert object of messages into an array and sort by timestamp
                     for (const key in messagesData) {
                         messagesArray.push({ id: key, ...messagesData[key] });
                     }
-                    // Sort by timestamp if available, otherwise by key (which Firebase uses for push IDs, often chronological)
                     messagesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
-                    console.log(`[listenForMessages] Found ${messagesArray.length} messages in snapshot for ${currentPrivateChatUserId ? 'private' : 'public'} chat.`);
-
                     messagesArray.forEach(msg => {
-                        console.log("[listenForMessages] Processing message:", msg); // Log each message being processed
                         const messageElement = document.createElement('div');
                         let alignmentClass = '';
                         let bubbleColorClass = '';
-                        let textColorClass = 'text-gray-200'; // Default text color for messages
+                        let textColorClass = 'text-gray-200';
 
-                        // Use displayName if available, otherwise fallback to truncated userId
                         const senderName = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}...`;
-                        const senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400'; // Different color for sender name
+                        const senderColorClass = (msg.userId === currentUserId) ? 'text-green-400' : 'text-blue-400';
 
                         if (msg.userId === currentUserId) {
                             alignmentClass = 'flex justify-end';
-                            bubbleColorClass = 'bg-gray-700 border border-green-600'; /* My messages, green border */
+                            bubbleColorClass = 'bg-gray-700 border border-green-600';
                         } else {
                             alignmentClass = 'flex justify-start';
-                            bubbleColorClass = 'bg-gray-800 border border-blue-600'; /* Other messages, blue border */
+                            bubbleColorClass = 'bg-gray-800 border border-blue-600';
                         }
 
-                        // Format timestamp if available
                         const date = msg.timestamp ? new Date(msg.timestamp) : null;
                         const timeString = date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Processing...';
 
                         let contentHtml = '';
                         if (msg.audioData) {
-                            // Display audio player for voice messages
                             contentHtml = `
                                 <audio controls class="w-full mt-2 rounded-md bg-gray-600 outline-none focus:outline-none focus:ring-1 focus:ring-green-400">
                                     <source src="${msg.audioData}" type="${msg.audioMimeType || 'audio/webm'}">
                                     Your browser does not support the audio element.
                                 </audio>
                             `;
-                            // If it's a voice message, show "Voice Message" or sender's name and "Voice"
                             let voiceMessageLabel = msg.userId === currentUserId ? "AUDIO LOG (OUTGOING)" : "AUDIO LOG (INCOMING)";
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${voiceMessageLabel}</div>` + contentHtml;
                         } else if (msg.imageData) {
-                            // Display image message
                             contentHtml = `
                                 <img src="${msg.imageData}" alt="User Image" class="max-w-full h-auto rounded-md mt-2 border border-gray-600 object-contain" style="max-height: 200px;">
                             `;
@@ -1483,19 +1737,17 @@
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${imageMessageLabel}</div>` + contentHtml;
                         }
                         else {
-                            // Display text message
                             let messageText = msg.text;
                             contentHtml = `<div class="text-sm md:text-base ${textColorClass} tracking-tight">${messageText}</div>`;
                         }
 
-                        // Get current status from the global map for this sender
                         const senderLiveStatus = userPresenceMap[msg.userId] ? userPresenceMap[msg.userId].status : 'unknown';
                         const statusColorClass = senderLiveStatus === 'online' ? 'text-green-500' : (senderLiveStatus === 'offline' ? 'text-red-500' : 'text-gray-500');
                         const statusText = senderLiveStatus === 'online' ? '[ONLINE]' : '[OFFLINE]';
 
 
                         messageElement.className = `${alignmentClass} mb-3`;
-                        messageElement.dataset.timestamp = msg.timestamp; // Store timestamp for seen status
+                        messageElement.dataset.timestamp = msg.timestamp;
                         messageElement.innerHTML = `
                             <div class="max-w-[80%] p-3.5 rounded-md shadow-inner ${bubbleColorClass} break-words font-['Roboto_Mono']">
                                 <div class="text-xs md:text-sm font-bold ${senderColorClass} mb-1 flex items-center">
@@ -1507,35 +1759,26 @@
                                 ${msg.userId === currentUserId && msg.timestamp ? `<div class="my-message-seen-status text-right text-xs text-gray-400 mt-1 hidden" data-message-timestamp="${msg.timestamp}"></div>` : ''}
                             </div>
                         `;
-                        // Insert new messages before the typing indicator
                         if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
                             messageArea.insertBefore(messageElement, currentTypingIndicator);
                         } else {
-                            // Fallback if for some reason typing indicator isn't found or is detached
                             messageArea.appendChild(messageElement);
                         }
 
-                        // Update currentLastMessageTimestamp
                         currentLastMessageTimestamp = Math.max(currentLastMessageTimestamp, msg.timestamp || 0);
                     });
 
-                    // Ensure typing indicator is always at the very end after messages are appended
                     if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
                          messageArea.appendChild(currentTypingIndicator);
                     }
 
-
-                    // Play sound/notification for NEW messages only after initial load
-                    if (lastProcessedMessageTimestamp > 0) { // Check if it's not the very first load
+                    if (lastProcessedMessageTimestamp > 0) {
                         messagesArray.forEach(msg => {
-                            // Only trigger for messages newer than what was last processed and not from current user
                             if ((msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId) {
-                                // Only play sound/notification for public messages or private messages directly to me
                                 if (!currentPrivateChatUserId || (currentPrivateChatUserId && (msg.userId === currentPrivateChatUserId || msg.recipientId === currentUserId))) {
                                     if (chatSound) {
                                         chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
                                     }
-                                    // Display browser notification for new messages from others
                                     const senderNameForNotification = msg.displayName || `Unit-${msg.userId.substring(0, 4).toUpperCase()}`;
                                     let notificationBody = "";
                                     if (msg.text) {
@@ -1550,22 +1793,17 @@
                             }
                         });
                     }
-                    // Update global lastProcessedMessageTimestamp
                     lastProcessedMessageTimestamp = currentLastMessageTimestamp;
                     
-                    // Always scroll to bottom after new messages are loaded
                     messageArea.scrollTop = messageArea.scrollHeight;
                     
-                    // Update read receipts for all messages after new messages are added
                     updateAllMessageStatusesInUI();
-                    updateMyLastReadMessageTimestamp(); // Also update my read status after messages load/scroll
+                    updateMyLastReadMessageTimestamp();
                 } else {
-                    console.log(`[listenForMessages] No messages found at ${messagesRef.toString()}.`);
                     const noMessagesElement = document.createElement('div');
                     noMessagesElement.className = "text-center text-gray-500 mt-8 text-base font-['Roboto_Mono']";
                     noMessagesElement.textContent = `No data logs found in ${currentPrivateChatUserId ? 'this private channel.' : 'the public channel.'} Start new transmission.`;
                     
-                    // Clear existing messages except current indicators, then append 'no messages'
                     Array.from(messageArea.children).forEach(child => {
                         const childId = child.id;
                         if (childId !== 'loading-indicator' && childId !== 'typing-indicator') {
@@ -1573,19 +1811,17 @@
                         }
                     });
                     
-                    // Ensure loading indicator is removed and noMessagesElement is added
                     if (currentLoadingIndicator) {
                         currentLoadingIndicator.remove();
                     }
                     messageArea.appendChild(noMessagesElement);
 
-                    // Ensure typing indicator is at the very end
                     if (currentTypingIndicator && currentTypingIndicator.parentNode === messageArea) {
                         messageArea.appendChild(currentTypingIndicator);
                     }
 
-                    lastProcessedMessageTimestamp = 0; // Reset if no messages
-                    messageArea.scrollTop = messageArea.scrollHeight; // Scroll to bottom even if no messages
+                    lastProcessedMessageTimestamp = 0;
+                    messageArea.scrollTop = messageArea.scrollHeight;
                 }
             }, (error) => {
                 console.error("[listenForMessages] Error fetching messages:", error);
@@ -1614,9 +1850,9 @@
                 existingAlert.remove();
             }
 
-            let bgColorClass = 'bg-blue-600'; // Default blue
-            if (type === 'red') bgColorClass = 'bg-red-700'; /* Darker red for errors */
-            else if (type === 'green') bgColorClass = 'bg-green-600'; /* Standard green for success */
+            let bgColorClass = 'bg-blue-600';
+            if (type === 'red') bgColorClass = 'bg-red-700';
+            else if (type === 'green') bgColorClass = 'bg-green-600';
 
             const alertDiv = document.createElement('div');
             alertDiv.id = 'app-alert';
@@ -1624,13 +1860,11 @@
             alertDiv.textContent = message;
             document.body.appendChild(alertDiv);
 
-            // Animate in
             setTimeout(() => {
                 alertDiv.classList.remove('scale-0', 'opacity-0');
                 alertDiv.classList.add('scale-100', 'opacity-100');
             }, 10);
 
-            // Animate out after 3 seconds
             setTimeout(() => {
                 alertDiv.classList.remove('scale-100', 'opacity-100');
                 alertDiv.classList.add('scale-0', 'opacity-0');
