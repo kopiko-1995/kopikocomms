@@ -739,8 +739,8 @@
         // NEW: Array of avatar emojis
         const avatarEmojis = [
             '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '😈',
-            '😉', '😊', '😋', '😌', '😎', '🤓', '🧐', '😏', '😮', '🤔', // Fixed typo '?' to '🤔'
-            '🤨', '�', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
+            '😉', '😊', '😋', '�', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
+            '🤨', '😐', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
             '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😵', '🤯',
             '🤠', '🥳', '😎', '🥸', '🥺', '😤', '😡', '😠', '🤬', '😳',
             '😱', '😨', '😰', '😥', '😢', '😭', '🤯', '😬', '😩', '🥺',
@@ -811,7 +811,7 @@
             sendButton.classList.remove('hidden');
             emojiButton.classList.remove('hidden');
             recordVoiceButton.classList.remove('hidden');
-            imageButtonLabel.classList.remove('hidden');
+            imageButtonLabel.classList.remove('hidden'); // Ensure the image attachment button is visible
 
             stopRecordButton.classList.add('hidden');
             sendVoiceButton.classList.add('hidden');
@@ -819,7 +819,7 @@
             
             sendImageButton.classList.add('hidden');
             imagePreviewStatus.classList.add('hidden');
-            imageInput.value = '';
+            imageInput.value = ''; // Clear the file input
             selectedImageBase64 = null;
             selectedImageMimeType = null;
 
@@ -1836,7 +1836,7 @@
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
                 } finally {
-                    if (!audioBlob) {
+                    if (!audioBlob) { // Ensure resetInputArea is called if it's not an audio message being sent (audio message handles its own reset via reader.onloadend)
                         messageInput.value = '';
                         resetInputArea();
                         if (!currentPrivateChatUserId) {
@@ -1889,19 +1889,19 @@
 
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: audioMimeType });
-                    stopRecordButton.classList.add('hidden');
-                    sendVoiceButton.classList.remove('hidden');
-                    recordVoiceButton.classList.add('hidden');
-                    recordingStatus.classList.add('hidden');
+                    // No need to hide buttons here, mediaRecorder.onstop fires *after* we've prepared for sending or cancelled
+                    // Visibility will be handled by resetInputArea after send, or user can manually reset
                 };
 
                 mediaRecorder.start();
                 recordVoiceButton.classList.add('record-button-active');
                 
-                recordVoiceButton.classList.add('hidden');
-                stopRecordButton.classList.remove('hidden');
-                recordingStatus.classList.remove('hidden');
-                sendVoiceButton.classList.add('hidden');
+                // Hide other input options when recording starts
+                recordVoiceButton.classList.add('hidden'); // Hide self
+                stopRecordButton.classList.remove('hidden'); // Show stop button
+                recordingStatus.classList.remove('hidden'); // Show recording status
+                
+                sendVoiceButton.classList.add('hidden'); // Keep send hidden until recording stops
                 messageInput.classList.add('hidden');
                 sendButton.classList.add('hidden');
                 emojiButton.classList.add('hidden');
@@ -1915,7 +1915,7 @@
             } catch (err) {
                 console.error("Error accessing microphone:", err);
                 alertMessage("Failed to access microphone. Check if a microphone is connected.", 'red');
-                resetInputArea();
+                resetInputArea(); // Reset everything if recording fails
             }
         }
 
@@ -1926,6 +1926,11 @@
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                // Show send button and hide stop button
+                stopRecordButton.classList.add('hidden');
+                sendVoiceButton.classList.remove('hidden');
+                recordingStatus.classList.add('hidden'); // Hide recording status
+                recordVoiceButton.classList.remove('record-button-active'); // Remove animation
                 alertMessage("Audio log terminated. Ready for transmit.", 'blue');
             }
         }
@@ -1948,7 +1953,7 @@
         function handleImageSelection(event) {
             if (!currentUserId) {
                 alertMessage("Authentication required to send images. Please log in or sign up.", 'red');
-                imageInput.value = '';
+                imageInput.value = ''; // Clear input if no auth
                 return;
             }
 
@@ -1968,9 +1973,7 @@
                     selectedImageBase64 = reader.result;
                     selectedImageMimeType = file.type;
 
-                    sendImageButton.classList.remove('hidden');
-                    imagePreviewStatus.classList.remove('hidden');
-                    
+                    // Hide unrelated controls
                     messageInput.classList.add('hidden');
                     sendButton.classList.add('hidden');
                     recordVoiceButton.classList.add('hidden');
@@ -1978,10 +1981,12 @@
                     sendVoiceButton.classList.add('hidden');
                     recordingStatus.classList.add('hidden');
                     emojiButton.classList.add('hidden');
-                    imageButtonLabel.classList.add('hidden');
-                    sendImageButton.classList.add('hidden');
-                    imagePreviewStatus.classList.add('hidden');
+                    // imageButtonLabel.classList.add('hidden'); // DO NOT HIDE the label, it's the trigger for file input
 
+                    // Show image-specific controls
+                    sendImageButton.classList.remove('hidden');
+                    imagePreviewStatus.classList.remove('hidden');
+                    
                     setMyTypingStatus(false);
                     alertMessage("Image selected, ready for transmission.", 'blue');
                 };
@@ -1989,7 +1994,7 @@
             } else {
                 selectedImageBase64 = null;
                 selectedImageMimeType = null;
-                resetInputArea();
+                resetInputArea(); // Reset if file selection is cancelled
             }
         }
 
