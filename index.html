@@ -414,7 +414,7 @@
     <div id="chat-app-container" class="bg-gray-900 rounded-lg shadow-xl overflow-hidden w-full h-screen sm:h-[95vh] sm:max-h-[900px] sm:w-[90vw] sm:max-w-5xl flex flex-col border border-gray-700 transition-all duration-300 ease-in-out hidden">
         <!-- Chat Header -->
         <div class="bg-gray-800 p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-y-2 md:gap-x-3 shadow-inner border-b border-green-500 flex-shrink-0">
-            <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
+            <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">REX Comms</h1>
             <!-- User Info and Online Users sections -->
             <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-1 md:gap-x-2 w-full md:w-auto">
                 <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center cursor-pointer" title="Manage Profile">
@@ -493,24 +493,24 @@
                 </button>
                 <span id="recording-status" class="text-red-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Recording Audio...</span>
 
-                <!-- Image Input and Send Button -->
+                <!-- Image/GIF Input and Send Button -->
                 <label for="image-input"
                     class="text-lg md:text-xl p-1.5 rounded-full bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white transition duration-300 ease-in-out shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-800 flex-shrink-0"
-                    title="Attach Image"
-                    id="image-button-label"
+                    title="Attach Image/GIF"
+                    id="attach-media-button-label"
                 >
                     📸
                     <input type="file" id="image-input" accept="image/*" class="hidden">
                 </label>
 
                 <button
-                    id="send-image-button"
+                    id="send-media-button"
                     class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-1.5 px-3 md:py-1.5 px-3.5 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 border border-blue-700 flex-shrink-0"
-                    title="Transmit Image"
+                    title="Transmit Media"
                 >
-                    🖼️ Send
+                    🔗 Send
                 </button>
-                <span id="image-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Image ready...</span>
+                <span id="media-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Media ready...</span>
 
                 <!-- Emoji Button -->
                 <button
@@ -656,11 +656,11 @@
         const sendVoiceButton = document.getElementById('send-voice-button');
         const recordingStatus = document.getElementById('recording-status');
 
-        // Image message elements
-        const imageInput = document.getElementById('image-input');
-        const sendImageButton = document.getElementById('send-image-button');
-        const imageButtonLabel = document.getElementById('image-button-label');
-        const imagePreviewStatus = document.getElementById('image-preview-status');
+        // Image/GIF message elements
+        const imageInput = document.getElementById('image-input'); // This is the file input for both images and GIFs
+        const attachMediaButtonLabel = document.getElementById('attach-media-button-label'); // Label for the file input
+        const sendMediaButton = document.getElementById('send-media-button'); // The send button for images/GIFs
+        const mediaPreviewStatus = document.getElementById('media-preview-status'); // Status text for images/GIFs
 
         // Online Users Modal elements
         const onlineUsersIndicator = document.getElementById('online-users-indicator');
@@ -696,9 +696,9 @@
         let audioBlob = null;
         let audioMimeType = '';
 
-        // Image message variables
-        let selectedImageBase64 = null;
-        let selectedImageMimeType = null;
+        // Image/GIF message variables
+        let selectedMediaBase64 = null;
+        let selectedMediaMimeType = null;
 
         // Typing indicator variables
         let typingTimeout = null;
@@ -738,8 +738,8 @@
 
         // NEW: Array of avatar emojis
         const avatarEmojis = [
-            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '😈',
-            '😉', '😊', '😋', '�', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
+            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '�',
+            '😉', '😊', '😋', '😌', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
             '🤨', '😐', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
             '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😵', '🤯',
             '🤠', '🥳', '😎', '🥸', '🥺', '😤', '😡', '😠', '🤬', '😳',
@@ -811,17 +811,17 @@
             sendButton.classList.remove('hidden');
             emojiButton.classList.remove('hidden');
             recordVoiceButton.classList.remove('hidden');
-            imageButtonLabel.classList.remove('hidden'); // Ensure the image attachment button is visible
+            attachMediaButtonLabel.classList.remove('hidden'); // Ensure the media attachment button is visible
 
             stopRecordButton.classList.add('hidden');
             sendVoiceButton.classList.add('hidden');
             recordingStatus.classList.add('hidden');
             
-            sendImageButton.classList.add('hidden');
-            imagePreviewStatus.classList.add('hidden');
+            sendMediaButton.classList.add('hidden'); // Use sendMediaButton
+            mediaPreviewStatus.classList.add('hidden'); // Use mediaPreviewStatus
             imageInput.value = ''; // Clear the file input
-            selectedImageBase64 = null;
-            selectedImageMimeType = null;
+            selectedMediaBase64 = null;
+            selectedMediaMimeType = null;
 
             setMyTypingStatus(false);
             
@@ -863,6 +863,9 @@
                 }, TYPING_INDICATOR_TIMEOUT_MS);
             });
 
+            // New: Handle paste event for Base64 image/GIF from clipboard (e.g., phone keyboard)
+            messageInput.addEventListener('paste', handlePasteEvent);
+
             emojiButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 emojiPicker.classList.toggle('hidden');
@@ -878,8 +881,8 @@
             stopRecordButton.addEventListener('click', stopRecording);
             sendVoiceButton.addEventListener('click', sendVoiceMessage);
 
-            imageInput.addEventListener('change', handleImageSelection);
-            sendImageButton.addEventListener('click', sendImageMessage);
+            imageInput.addEventListener('change', handleMediaSelection); // Renamed event listener
+            sendMediaButton.addEventListener('click', sendMediaMessage); // Renamed event listener
 
             onlineUsersIndicator.addEventListener('click', showOnlineUsersModal);
             onlineUsersCloseButton.addEventListener('click', hideOnlineUsersModal);
@@ -1743,7 +1746,7 @@
 
         /**
          * Sends a message to the Firebase Realtime Database.
-         * This function now handles text, audio, and image messages.
+         * This function now handles text, audio, and image/GIF messages.
          */
         async function sendMessage() {
             if (!currentUserId) {
@@ -1763,7 +1766,7 @@
                 messagesPath = `artifacts/${appId}/public/data/messages`;
             }
 
-            if ((messageText || audioBlob || selectedImageBase64) && currentUserId) {
+            if ((messageText || audioBlob || selectedMediaBase64) && currentUserId) {
                 try {
                     const messagesRef = ref(db, messagesPath);
                     const messagePayload = {
@@ -1809,10 +1812,15 @@
                         };
                         reader.readAsDataURL(audioBlob);
                         return;
-                    } else if (selectedImageBase64) {
-                        messagePayload.imageData = selectedImageBase64;
-                        messagePayload.imageMimeType = selectedImageMimeType;
-                        messagePayload.type = 'image';
+                    } else if (selectedMediaBase64) { // This now handles both images and GIFs
+                        messagePayload.imageData = selectedMediaBase64;
+                        messagePayload.imageMimeType = selectedMediaMimeType;
+                        // Determine type based on mimeType
+                        if (selectedMediaMimeType === 'image/gif') {
+                            messagePayload.type = 'gif';
+                        } else {
+                            messagePayload.type = 'image';
+                        }
                     }
 
                     await push(messagesRef, messagePayload);
@@ -1905,9 +1913,9 @@
                 messageInput.classList.add('hidden');
                 sendButton.classList.add('hidden');
                 emojiButton.classList.add('hidden');
-                imageButtonLabel.classList.add('hidden');
-                sendImageButton.classList.add('hidden');
-                imagePreviewStatus.classList.add('hidden');
+                attachMediaButtonLabel.classList.add('hidden'); // Hide the media attachment button
+                sendMediaButton.classList.add('hidden');
+                mediaPreviewStatus.classList.add('hidden');
 
                 setMyTypingStatus(false);
                 alertMessage("Audio log initiated...", 'blue');
@@ -1948,11 +1956,12 @@
         }
 
         /**
-         * Handles image file selection.
+         * Handles image/GIF file selection.
+         * @param {Event} event - The change event from the file input.
          */
-        function handleImageSelection(event) {
+        function handleMediaSelection(event) {
             if (!currentUserId) {
-                alertMessage("Authentication required to send images. Please log in or sign up.", 'red');
+                alertMessage("Authentication required to send media. Please log in or sign up.", 'red');
                 imageInput.value = ''; // Clear input if no auth
                 return;
             }
@@ -1960,18 +1969,18 @@
             const file = event.target.files[0];
             if (file) {
                 if (!file.type.startsWith('image/')) {
-                    alertMessage("Please select an image file.", 'red');
+                    alertMessage("Please select an image or GIF file.", 'red');
                     imageInput.value = '';
-                    selectedImageBase64 = null;
-                    selectedImageMimeType = null;
+                    selectedMediaBase64 = null;
+                    selectedMediaMimeType = null;
                     resetInputArea();
                     return;
                 }
 
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    selectedImageBase64 = reader.result;
-                    selectedImageMimeType = file.type;
+                    selectedMediaBase64 = reader.result;
+                    selectedMediaMimeType = file.type;
 
                     // Hide unrelated controls
                     messageInput.classList.add('hidden');
@@ -1981,31 +1990,72 @@
                     sendVoiceButton.classList.add('hidden');
                     recordingStatus.classList.add('hidden');
                     emojiButton.classList.add('hidden');
-                    // imageButtonLabel.classList.add('hidden'); // DO NOT HIDE the label, it's the trigger for file input
+                    // attachMediaButtonLabel.classList.add('hidden'); // DO NOT HIDE the label, it's the trigger for file input
 
-                    // Show image-specific controls
-                    sendImageButton.classList.remove('hidden');
-                    imagePreviewStatus.classList.remove('hidden');
+                    // Show media-specific controls
+                    sendMediaButton.classList.remove('hidden');
+                    mediaPreviewStatus.classList.remove('hidden');
                     
                     setMyTypingStatus(false);
-                    alertMessage("Image selected, ready for transmission.", 'blue');
+                    alertMessage(`Media selected (${file.type}), ready for transmission.`, 'blue');
                 };
                 reader.readAsDataURL(file);
             } else {
-                selectedImageBase64 = null;
-                selectedImageMimeType = null;
+                selectedMediaBase64 = null;
+                selectedMediaMimeType = null;
                 resetInputArea(); // Reset if file selection is cancelled
             }
         }
 
         /**
-         * Sends an image message to the Firebase Realtime Database.
+         * Handles paste events on the message input to detect Base64 images/GIFs.
+         * @param {Event} event - The paste event.
          */
-        async function sendImageMessage() {
-            if (selectedImageBase64 && currentUserId) {
+        function handlePasteEvent(event) {
+            const clipboardData = event.clipboardData || window.clipboardData;
+            const pastedText = clipboardData.getData('text/plain');
+
+            // Regex to check for a data URI (Base64 encoded image/gif)
+            const dataURIRegex = /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/;
+            const match = pastedText.match(dataURIRegex);
+
+            if (match) {
+                event.preventDefault(); // Prevent the Base64 string from appearing in the input
+                selectedMediaBase64 = pastedText;
+                selectedMediaMimeType = match[0].split(';')[0].split(':')[1]; // e.g., "image/gif"
+                
+                // Simulate file selection flow
+                messageInput.value = ''; // Clear input
+                messageInput.classList.add('hidden');
+                sendButton.classList.add('hidden');
+                recordVoiceButton.classList.add('hidden');
+                stopRecordButton.classList.add('hidden');
+                sendVoiceButton.classList.add('hidden');
+                recordingStatus.classList.add('hidden');
+                emojiButton.classList.add('hidden');
+                // attachMediaButtonLabel.classList.add('hidden'); // Keep visible for manual file upload
+
+                sendMediaButton.classList.remove('hidden');
+                mediaPreviewStatus.textContent = `Pasted ${selectedMediaMimeType.split('/')[1].toUpperCase()} ready...`;
+                mediaPreviewStatus.classList.remove('hidden');
+                
+                setMyTypingStatus(false);
+                alertMessage(`Pasted ${selectedMediaMimeType.split('/')[1].toUpperCase()} detected. Ready for transmit.`, 'blue');
+            } else {
+                // If it's not a Base64 image, let the text paste normally
+                console.log("Pasted content is not a Base64 image/GIF.");
+            }
+        }
+
+
+        /**
+         * Sends an image or GIF message to the Firebase Realtime Database.
+         */
+        async function sendMediaMessage() {
+            if (selectedMediaBase64 && currentUserId) {
                 sendMessage();
             } else {
-                alertMessage("No image detected for transmission.", 'red');
+                alertMessage("No media detected for transmission.", 'red');
                 resetInputArea();
             }
         }
@@ -2098,11 +2148,12 @@
                             `;
                             let voiceMessageLabel = msg.userId === currentUserId ? "AUDIO LOG (OUTGOING)" : "AUDIO LOG (INCOMING)";
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${voiceMessageLabel}</div>` + contentHtml;
-                        } else if (msg.imageData) {
+                        } else if (msg.type === 'image' || msg.type === 'gif') { // Handle both image and gif
+                            const mediaTypeLabel = msg.type === 'gif' ? "GIF LOG" : "IMAGE LOG";
                             contentHtml = `
-                                <img src="${msg.imageData}" alt="User Image" class="max-w-full h-auto rounded-md mt-2 border border-gray-600 object-contain" style="max-height: 200px;">
+                                <img src="${msg.imageData}" alt="User ${mediaTypeLabel}" class="max-w-full h-auto rounded-md mt-2 border border-gray-600 object-contain" style="max-height: 200px;">
                             `;
-                            let imageMessageLabel = msg.userId === currentUserId ? "IMAGE LOG (OUTGOING)" : "IMAGE LOG (INCOMING)";
+                            let imageMessageLabel = msg.userId === currentUserId ? `${mediaTypeLabel} (OUTGOING)` : `${mediaTypeLabel} (INCOMING)`;
                             contentHtml = `<div class="font-semibold mb-1 text-xs uppercase tracking-wide ${senderColorClass}">${imageMessageLabel}</div>` + contentHtml;
                         }
                         else {
@@ -2155,8 +2206,8 @@
                                         notificationBody = msg.text;
                                     } else if (msg.audioData) {
                                         notificationBody = "Audio Message";
-                                    } else if (msg.imageData) {
-                                        notificationBody = "Image Message";
+                                    } else if (msg.type === 'image' || msg.type === 'gif') { // Notification for images and GIFs
+                                        notificationBody = `${msg.type.toUpperCase()} Message`;
                                     }
                                     displayNotification(`New message from ${senderNameForNotification}`, notificationBody);
                                 }
