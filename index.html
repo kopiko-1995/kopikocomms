@@ -414,7 +414,7 @@
     <div id="chat-app-container" class="bg-gray-900 rounded-lg shadow-xl overflow-hidden w-full h-screen sm:h-[95vh] sm:max-h-[900px] sm:w-[90vw] sm:max-w-5xl flex flex-col border border-gray-700 transition-all duration-300 ease-in-out hidden">
         <!-- Chat Header -->
         <div class="bg-gray-800 p-2 md:p-4 flex flex-col md:flex-row justify-between items-center gap-y-2 md:gap-x-3 shadow-inner border-b border-green-500 flex-shrink-0">
-            <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">REX Comms</h1>
+            <h1 class="text-lg md:text-2xl font-bold text-green-400 text-center md:text-left tracking-wider uppercase font-['Oxanium']">Tactical Comms</h1>
             <!-- User Info and Online Users sections -->
             <div class="flex flex-col md:flex-row items-center md:justify-end gap-y-1 md:gap-x-2 w-full md:w-auto">
                 <div id="user-info" class="text-xs md:text-sm font-medium text-gray-400 flex items-center cursor-pointer" title="Manage Profile">
@@ -511,6 +511,15 @@
                     🔗 Send
                 </button>
                 <span id="media-preview-status" class="text-blue-500 font-semibold hidden whitespace-nowrap ml-2 text-xs">Media ready...</span>
+
+                <!-- NEW: Cancel Media Button -->
+                <button
+                    id="cancel-media-button"
+                    class="bg-gray-600 hover:bg-gray-500 active:bg-gray-700 text-white font-bold py-1.5 px-3 md:py-1.5 px-3.5 rounded-sm hidden transition duration-300 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 border border-gray-700 flex-shrink-0"
+                    title="Cancel Media Attachment"
+                >
+                    ❌ Cancel
+                </button>
 
                 <!-- Emoji Button -->
                 <button
@@ -662,6 +671,9 @@
         const sendMediaButton = document.getElementById('send-media-button'); // The send button for images/GIFs
         const mediaPreviewStatus = document.getElementById('media-preview-status'); // Status text for images/GIFs
 
+        // NEW: Cancel Media Button
+        const cancelMediaButton = document.getElementById('cancel-media-button');
+
         // Online Users Modal elements
         const onlineUsersIndicator = document.getElementById('online-users-indicator');
         const onlineCountSpan = document.getElementById('online-count');
@@ -738,7 +750,7 @@
 
         // NEW: Array of avatar emojis
         const avatarEmojis = [
-            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '�',
+            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '😈',
             '😉', '😊', '😋', '😌', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
             '🤨', '😐', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
             '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😵', '🤯',
@@ -819,6 +831,7 @@
             
             sendMediaButton.classList.add('hidden'); // Use sendMediaButton
             mediaPreviewStatus.classList.add('hidden'); // Use mediaPreviewStatus
+            cancelMediaButton.classList.add('hidden'); // Hide cancel button
             imageInput.value = ''; // Clear the file input
             selectedMediaBase64 = null;
             selectedMediaMimeType = null;
@@ -841,10 +854,10 @@
             myProfilePicThumb.textContent = currentProfilePicUrl; // Set emoji as text content
 
             setupPresence();
-            listenForMessages();
+            listenForMessages(); // This will handle initial scroll to bottom
             populateEmojiPicker();
             populateAvatarEmojiPicker(); // NEW: Call to populate avatar emojis
-            resetInputArea();
+            resetInputArea(); // Call resetInputArea to ensure UI is clean
             requestNotificationPermission();
             requestMicrophonePermission();
             
@@ -884,12 +897,15 @@
             imageInput.addEventListener('change', handleMediaSelection); // Renamed event listener
             sendMediaButton.addEventListener('click', sendMediaMessage); // Renamed event listener
 
+            cancelMediaButton.addEventListener('click', resetInputArea); // Add event listener for cancel button
+
             onlineUsersIndicator.addEventListener('click', showOnlineUsersModal);
             onlineUsersCloseButton.addEventListener('click', hideOnlineUsersModal);
 
             leavePrivateChatButton.addEventListener('click', leavePrivateChat);
 
-            messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
+            // Removed `messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);` from here.
+            // It will be added in `listenForMessages` for active chat only.
 
             // Profile Modal Event Listeners
             userInfoHeader.addEventListener('click', openProfileModal);
@@ -1333,7 +1349,7 @@
                 if (typingIndicatorElement) {
                     if (anyOtherUserTyping) {
                         typingIndicatorElement.classList.remove('hidden');
-                        messageArea.scrollTop = messageArea.scrollHeight;
+                        // No need to scroll here for typing indicator, as it's handled by message rendering scroll logic
                     } else {
                         typingIndicatorElement.classList.add('hidden');
                     }
@@ -1390,23 +1406,25 @@
                 return;
             }
 
-            const tolerance = 50;
-            if (messageArea.scrollHeight - messageArea.scrollTop <= messageArea.clientHeight + tolerance) {
+            // Define a small tolerance (e.g., 100 pixels) to consider being "at the bottom"
+            const scrollTolerance = 100;
+            // Check if the user is scrolled to the very bottom, or very close to it
+            const isAtOrNearBottom = messageArea.scrollHeight - messageArea.scrollTop <= messageArea.clientHeight + scrollTolerance;
+
+            if (isAtOrNearBottom) {
                 const allMessageElements = messageArea.querySelectorAll('.mb-3');
                 const lastMessageElement = allMessageElements.length > 0 ? allMessageElements[allMessageElements.length - 1] : null;
 
                 if (lastMessageElement && lastMessageElement.dataset.timestamp) {
                     const lastMessageTimestamp = parseInt(lastMessageElement.dataset.timestamp);
                     const currentUserPresenceRef = ref(db, `artifacts/${appId}/public/data/users_presence/${currentUserId}`);
-                    if (!userPresenceMap[currentUserId] || userPresenceMap[currentUserId].lastReadMessageTimestamp < lastMessageTimestamp) {
-                        get(currentUserPresenceRef).then(snapshot => {
-                            const currentData = snapshot.val() || {};
-                            set(currentUserPresenceRef, {
-                                ...currentData,
-                                lastReadMessageTimestamp: lastMessageTimestamp,
-                                timestamp: serverTimestamp(),
-                                currentActivePrivateChatWith: currentPrivateChatUserId 
-                            });
+                    
+                    // Only update if the new timestamp is greater than the currently recorded one
+                    if (!userPresenceMap[currentUserId] || (userPresenceMap[currentUserId].lastReadMessageTimestamp || 0) < lastMessageTimestamp) {
+                        update(currentUserPresenceRef, {
+                            lastReadMessageTimestamp: lastMessageTimestamp,
+                            timestamp: serverTimestamp(),
+                            currentActivePrivateChatWith: currentPrivateChatUserId 
                         }).catch(error => console.error("Error updating last read timestamp:", error));
                     }
                 }
@@ -1443,23 +1461,45 @@
 
             document.querySelectorAll('.my-message-seen-status').forEach(seenStatusDiv => {
                 const messageElement = seenStatusDiv.closest('.mb-3');
-                if (!messageElement) return;
+                if (!messageElement || messageElement.dataset.messageType !== 'public' && messageElement.dataset.messageType !== 'private') return;
 
                 const messageTimestamp = parseInt(messageElement.dataset.timestamp);
-                const seenBy = [];
-                for (const userId in userPresenceMap) {
-                    if (userId !== currentUserId && userPresenceMap[userId].status === 'online' &&
-                        userPresenceMap[userId].lastReadMessageTimestamp &&
-                        userPresenceMap[userId].lastReadMessageTimestamp >= messageTimestamp) {
-                        seenBy.push(userPresenceMap[userId].displayName || `Unit-${userId.substring(0,4).toUpperCase()}`);
-                    }
-                }
+                
+                // PUBLIC CHAT SEEN STATUS
+                if (messageElement.dataset.messageType === 'public') {
+                    const seenBy = [];
+                    for (const userId in userPresenceMap) {
+                        // Include only other online users who are not in a private chat with someone else (or who are in public chat)
+                        // and whose last read timestamp is greater than or equal to the message timestamp.
+                        const userData = userPresenceMap[userId];
+                        const isOnlineAndInPublicOrNoSpecificChat = userData.status === 'online' && (userData.currentActivePrivateChatWith === null || userData.currentActivePrivateChatWith === undefined);
 
-                if (seenBy.length > 0) {
-                    seenStatusDiv.textContent = `Seen by: ${seenBy.join(', ')}`;
-                    seenStatusDiv.classList.remove('hidden');
-                } else {
-                    seenStatusDiv.classList.add('hidden');
+                        if (userId !== currentUserId && isOnlineAndInPublicOrNoSpecificChat &&
+                            (userData.lastReadMessageTimestamp || 0) >= messageTimestamp) {
+                            seenBy.push(userData.displayName || `Unit-${userId.substring(0,4).toUpperCase()}`);
+                        }
+                    }
+
+                    if (seenBy.length > 0) {
+                        seenStatusDiv.textContent = `Seen by: ${seenBy.join(', ')}`;
+                        seenStatusDiv.classList.remove('hidden');
+                    } else {
+                        seenStatusDiv.classList.add('hidden');
+                    }
+                } 
+                // PRIVATE CHAT SEEN STATUS
+                else if (messageElement.dataset.messageType === 'private') {
+                    const recipientId = currentPrivateChatUserId;
+                    const recipientData = userPresenceMap[recipientId];
+
+                    if (recipientData && recipientData.status === 'online' &&
+                        recipientData.currentActivePrivateChatWith === currentUserId && // Ensure recipient is actively in chat with me
+                        (recipientData.lastReadMessageTimestamp || 0) >= messageTimestamp) {
+                        seenStatusDiv.textContent = 'Seen';
+                        seenStatusDiv.classList.remove('hidden');
+                    } else {
+                        seenStatusDiv.classList.add('hidden');
+                    }
                 }
             });
         }
@@ -1648,9 +1688,8 @@
                                     </div>`;
 
             listenForMessages();
-
+            messageArea.scrollTop = messageArea.scrollHeight; // Force scroll to bottom on chat switch
             alertMessage(`Initiating private comms with ${targetDisplayName}`, 'blue');
-            messageArea.scrollTop = messageArea.scrollHeight;
         }
 
         /**
@@ -1673,10 +1712,9 @@
                                     <div id="typing-indicator" class="typing-indicator hidden">
                                     <span style="--delay: 0s;">.</span><span style="--delay: 0.2s;">.</span><span style="--delay: 0.4s;">.</span> Someone is typing...
                                     </div>`;
-            messageArea.scrollTop = messageArea.scrollHeight;
 
             listenForMessages(); 
-
+            messageArea.scrollTop = messageArea.scrollHeight; // Force scroll to bottom on chat switch
             alertMessage("Returned to public comms channel.", 'blue');
         }
 
@@ -1756,14 +1794,17 @@
 
             const messageText = messageInput.value.trim();
             let messagesPath = '';
+            let messageType = 'public'; // Default to public
 
             if (currentPrivateChatUserId) {
                 const chatPartnerId = currentPrivateChatUserId;
                 const ids = [currentUserId, chatPartnerId].sort();
                 const chatId = `${ids[0]}_${ids[1]}`;
                 messagesPath = `artifacts/${appId}/private_chats/${chatId}/messages`;
+                messageType = 'private'; // Set to private
             } else {
                 messagesPath = `artifacts/${appId}/public/data/messages`;
+                messageType = 'public'; // Set to public
             }
 
             if ((messageText || audioBlob || selectedMediaBase64) && currentUserId) {
@@ -1774,6 +1815,7 @@
                         displayName: currentDisplayName,
                         profilePicUrl: (currentProfilePicUrl === '' || currentProfilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : currentProfilePicUrl, // Include sender's profile picture URL (emoji)
                         timestamp: serverTimestamp(),
+                        messageType: messageType // Store message type
                     };
 
                     if (messageText) {
@@ -1916,6 +1958,7 @@
                 attachMediaButtonLabel.classList.add('hidden'); // Hide the media attachment button
                 sendMediaButton.classList.add('hidden');
                 mediaPreviewStatus.classList.add('hidden');
+                cancelMediaButton.classList.remove('hidden'); // Show cancel button
 
                 setMyTypingStatus(false);
                 alertMessage("Audio log initiated...", 'blue');
@@ -1939,6 +1982,7 @@
                 sendVoiceButton.classList.remove('hidden');
                 recordingStatus.classList.add('hidden'); // Hide recording status
                 recordVoiceButton.classList.remove('record-button-active'); // Remove animation
+                cancelMediaButton.classList.remove('hidden'); // Keep cancel button visible after stop, until sent or cancelled
                 alertMessage("Audio log terminated. Ready for transmit.", 'blue');
             }
         }
@@ -1995,6 +2039,7 @@
                     // Show media-specific controls
                     sendMediaButton.classList.remove('hidden');
                     mediaPreviewStatus.classList.remove('hidden');
+                    cancelMediaButton.classList.remove('hidden'); // Show cancel button
                     
                     setMyTypingStatus(false);
                     alertMessage(`Media selected (${file.type}), ready for transmission.`, 'blue');
@@ -2038,6 +2083,7 @@
                 sendMediaButton.classList.remove('hidden');
                 mediaPreviewStatus.textContent = `Pasted ${selectedMediaMimeType.split('/')[1].toUpperCase()} ready...`;
                 mediaPreviewStatus.classList.remove('hidden');
+                cancelMediaButton.classList.remove('hidden'); // Show cancel button
                 
                 setMyTypingStatus(false);
                 alertMessage(`Pasted ${selectedMediaMimeType.split('/')[1].toUpperCase()} detected. Ready for transmit.`, 'blue');
@@ -2068,6 +2114,9 @@
         let privateMessageUnsubscribe = null;
 
         function listenForMessages() {
+            // Remove previous scroll listener if it exists to avoid multiple listeners
+            messageArea.removeEventListener('scroll', updateMyLastReadMessageTimestamp);
+
             if (publicMessageUnsubscribe) {
                 publicMessageUnsubscribe();
                 publicMessageUnsubscribe = null;
@@ -2080,15 +2129,22 @@
             }
 
             let messagesRef;
+            let currentMessageType;
+
             if (currentPrivateChatUserId) {
                 const ids = [currentUserId, currentPrivateChatUserId].sort();
                 const chatId = `${ids[0]}_${ids[1]}`;
                 messagesRef = ref(db, `artifacts/${appId}/private_chats/${chatId}/messages`);
+                currentMessageType = 'private';
                 console.log(`[listenForMessages] Actively listening to private chat: ${messagesRef.toString()}`);
             } else {
                 messagesRef = ref(db, `artifacts/${appId}/public/data/messages`);
+                currentMessageType = 'public';
                 console.log(`[listenForMessages] Actively listening to public chat: ${messagesRef.toString()}`);
             }
+
+            // Add scroll listener for the currently active chat
+            messageArea.addEventListener('scroll', updateMyLastReadMessageTimestamp);
 
             const unsubscribe = onValue(messagesRef, (snapshot) => {
                 const currentLoadingIndicator = document.getElementById('loading-indicator');
@@ -2098,6 +2154,9 @@
                     currentLoadingIndicator.style.display = 'none';
                 }
                 
+                // Capture current scroll state before clearing and appending
+                const isScrolledToBottomBeforeUpdate = messageArea.scrollHeight - messageArea.scrollTop <= messageArea.clientHeight + 100; // 100px tolerance
+
                 Array.from(messageArea.children).forEach(child => {
                     if (child !== currentLoadingIndicator && child !== currentTypingIndicator) {
                         child.remove();
@@ -2105,6 +2164,7 @@
                 });
 
                 let currentLastMessageTimestamp = 0;
+                let shouldScrollToBottom = isScrolledToBottomBeforeUpdate; // Keep at bottom if already there
 
                 if (snapshot.exists()) {
                     const messagesData = snapshot.val();
@@ -2130,6 +2190,8 @@
                         if (msg.userId === currentUserId) {
                             alignmentClass = 'flex justify-end';
                             bubbleColorClass = 'bg-gray-700 border border-green-600';
+                            // If the new message is from the current user, force scroll to bottom
+                            shouldScrollToBottom = true; 
                         } else {
                             alignmentClass = 'flex justify-start';
                             bubbleColorClass = 'bg-gray-800 border border-blue-600';
@@ -2168,6 +2230,7 @@
 
                         messageElement.className = `${alignmentClass} mb-3`;
                         messageElement.dataset.timestamp = msg.timestamp;
+                        messageElement.dataset.messageType = currentMessageType; // Store the message type (public/private)
                         messageElement.innerHTML = `
                             <div class="max-w-[80%] p-3.5 rounded-md shadow-inner ${bubbleColorClass} break-words font-['Roboto_Mono']">
                                 <div class="text-xs md:text-sm font-bold ${senderColorClass} mb-1 flex items-center">
@@ -2196,7 +2259,10 @@
                     if (lastProcessedMessageTimestamp > 0) {
                         messagesArray.forEach(msg => {
                             if ((msg.timestamp || 0) > lastProcessedMessageTimestamp && msg.userId !== currentUserId) {
-                                if (!currentPrivateChatUserId || (currentPrivateChatUserId && (msg.userId === currentPrivateChatUserId || msg.recipientId === currentUserId))) {
+                                // Only play sound/notification if the message is for the *current active chat*
+                                // For public chat: any message
+                                // For private chat: message from the specific chat partner
+                                if (currentMessageType === 'public' || (currentMessageType === 'private' && msg.userId === currentPrivateChatUserId)) {
                                     if (chatSound) {
                                         chatSound.play().catch(e => console.log("Sound play prevented or failed:", e));
                                     }
@@ -2216,10 +2282,12 @@
                     }
                     lastProcessedMessageTimestamp = currentLastMessageTimestamp;
                     
-                    messageArea.scrollTop = messageArea.scrollHeight;
+                    if (shouldScrollToBottom) {
+                        messageArea.scrollTop = messageArea.scrollHeight;
+                    }
                     
                     updateAllMessageStatusesInUI();
-                    updateMyLastReadMessageTimestamp();
+                    updateMyLastReadMessageTimestamp(); // Update seen status for self
                 } else {
                     const noMessagesElement = document.createElement('div');
                     noMessagesElement.className = "text-center text-gray-500 mt-8 text-base font-['Roboto_Mono']";
@@ -2242,7 +2310,7 @@
                     }
 
                     lastProcessedMessageTimestamp = 0;
-                    messageArea.scrollTop = messageArea.scrollHeight;
+                    messageArea.scrollTop = messageArea.scrollHeight; // Always scroll to bottom if no messages
                 }
             }, (error) => {
                 console.error("[listenForMessages] Error fetching messages:", error);
