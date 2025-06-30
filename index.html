@@ -592,7 +592,7 @@
 
     <!-- Hidden audio element for chat notification sound -->
     <audio id="chat-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaWdodCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMABMVU0zLjEwMFpDbgAAAAAAAAAAAAAAAAAAAAAAAAAA//tDEAAAKgAAAHwAAAEyAAABtAAAAYABxAAAk0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xMNAAsAAGAAAAhCQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7QxAAAAoAAAB8AAAAQjAAABtAAAEyAAACwAAAB8AAALAAAATjAAADQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAGIAAAAYAAAAvQgAAAIAAP/zEzNABsAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhY3RTAAAAJGNvcHlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAGIAAAAYAAABLkIgAAAAAA//tDcQAAoAAAAHwAAAEIeXRhZGVhAAAkY29wePlyaW5odCBPc2NhciBTeW50aCBTb2x1dGlvbnNQAQAAAABpYW1lAAAAACQAAAEAAAP/zEzUAAwAAAZAAAACvQgAAAAAAAAAAP/zEzUAYgAAABcAAAAEQmQAAAAeAAAAPAAAAhCQAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8xM1AAMAAAGQAAAAy0IAAAAAAAAAAA==" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -751,7 +751,7 @@
         // NEW: Array of avatar emojis
         const avatarEmojis = [
             '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😇', '😈',
-            '😉', '😊', '😋', '😌', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
+            '😉', '😊', '😋', '�', '😎', '🤓', '🧐', '😏', '😮', '🤔', 
             '🤨', '😐', '😑', '😶', '🤫', '🤥', '😬', '😮‍💨', '😴', '🤤',
             '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😵', '🤯',
             '🤠', '🥳', '😎', '🥸', '🥺', '😤', '😡', '😠', '🤬', '😳',
@@ -838,7 +838,7 @@
 
             setMyTypingStatus(false);
             
-            messageArea.scrollTop = messageArea.scrollHeight;
+            // messageArea.scrollTop = messageArea.scrollHeight; // Removed this from resetInputArea
         }
 
         /**
@@ -1281,6 +1281,8 @@
                 } else {
                     currentActiveChatIdForThisClient = "public";
                 }
+                console.log(`[setupPresence - onValue] Current active chat for this client: ${currentActiveChatIdForThisClient}`);
+
 
                 snapshot.forEach((childSnapshot) => {
                     const userData = childSnapshot.val();
@@ -1289,6 +1291,9 @@
                     // Filter out old placeholder URLs from received data too
                     const userProfilePic = (userData.profilePicUrl === '' || userData.profilePicUrl === OLD_PLACEHOLDER_URL) ? '😀' : userData.profilePicUrl || '😀';
                     userPresenceMap[userId] = { ...userData, profilePicUrl: userProfilePic };
+
+                    console.log(`  User: ${userData.displayName || userId.substring(0, 6)} | isTyping: ${userData.isTyping}, typingInChatId: ${userData.typingInChatId} | Matches current chat: ${userData.typingInChatId === currentActiveChatIdForThisClient}`);
+
 
                     if (userData.status === 'online') {
                         onlineUsersCount++;
@@ -1328,7 +1333,7 @@
                         }
                         onlineUsersList.appendChild(listItem);
                         
-                        if (userId !== currentUserId && userData.typingInChatId === currentActiveChatIdForThisClient) {
+                        if (userId !== currentUserId && userData.isTyping && userData.typingInChatId === currentActiveChatIdForThisClient) {
                             anyOtherUserTyping = true;
                         }
                     }
@@ -1347,6 +1352,7 @@
 
                 const typingIndicatorElement = document.getElementById('typing-indicator');
                 if (typingIndicatorElement) {
+                    console.log(`[setupPresence - onValue] Final anyOtherUserTyping: ${anyOtherUserTyping}`);
                     if (anyOtherUserTyping) {
                         typingIndicatorElement.classList.remove('hidden');
                         // No need to scroll here for typing indicator, as it's handled by message rendering scroll logic
@@ -1378,6 +1384,8 @@
                     typingStatusChatId = "public";
                 }
             }
+            console.log(`[setMyTypingStatus] Setting typing status for ${currentUserId}: isTyping=${isTyping}, typingInChatId=${typingStatusChatId}`);
+
 
             get(currentUserPresenceRef).then(snapshot => {
                 const currentData = snapshot.val() || {};
@@ -1847,7 +1855,9 @@
                             audioBlob = null;
                             audioChunks = [];
                             audioMimeType = '';
-                            resetInputArea();
+                            // No need to clear messageInput.value here, it's done outside
+                            messageInput.value = ''; // Clear input unconditionally
+                            resetInputArea(); // Then reset UI elements
                             if (!currentPrivateChatUserId) {
                                 cleanupOldMessages(); 
                             }
@@ -1886,16 +1896,15 @@
                     console.error("Error sending message:", error);
                     alertMessage("Transmission failed. Retrying...", 'red');
                 } finally {
-                    if (!audioBlob) { // Ensure resetInputArea is called if it's not an audio message being sent (audio message handles its own reset via reader.onloadend)
-                        messageInput.value = '';
-                        resetInputArea();
-                        if (!currentPrivateChatUserId) {
-                            cleanupOldMessages(); 
-                        }
+                    messageInput.value = ''; // Clear input unconditionally
+                    resetInputArea(); // Then reset UI elements
+                    if (!currentPrivateChatUserId) {
+                        cleanupOldMessages(); 
                     }
                 }
             } else {
                 alertMessage("No content to transmit.", 'red');
+                messageInput.value = ''; // Clear input unconditionally
                 resetInputArea();
             }
         }
@@ -1995,6 +2004,7 @@
                 sendMessage();
             } else {
                 alertMessage("No audio log detected for transmission.", 'red');
+                messageInput.value = ''; // Clear input unconditionally
                 resetInputArea();
             }
         }
@@ -2048,6 +2058,7 @@
             } else {
                 selectedMediaBase64 = null;
                 selectedMediaMimeType = null;
+                messageInput.value = ''; // Clear input unconditionally
                 resetInputArea(); // Reset if file selection is cancelled
             }
         }
@@ -2102,6 +2113,7 @@
                 sendMessage();
             } else {
                 alertMessage("No media detected for transmission.", 'red');
+                messageInput.value = ''; // Clear input unconditionally
                 resetInputArea();
             }
         }
